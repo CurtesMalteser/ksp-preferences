@@ -13,4 +13,6 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "KsPreferences"
+
 include ':app'
+include ':processor'
