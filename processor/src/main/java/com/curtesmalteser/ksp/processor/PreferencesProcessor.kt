@@ -2,6 +2,7 @@ package com.curtesmalteser.ksp.processor
 
 import com.curtesmalteser.ksp.annotation.Preferences
 import com.google.devtools.ksp.processing.*
+import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSNode
@@ -67,13 +68,12 @@ class ClassVisitor : KSTopDownVisitor<OutputStreamWriter, Unit>() {
         classDeclaration.let {
             it.annotations.firstOrNull { annotation ->
                 annotation.annotationType.resolve().declaration.qualifiedName?.asString() == Preferences::class.qualifiedName
-            }?.let {
-
+            }?.run { it }
+        }?.let {
+            if (it.classKind == ClassKind.INTERFACE) {
                 val symbolName = classDeclaration.simpleName.asString().lowercase()
-
                 data.write("    val $symbolName = true\n")
             }
-
         }
 
     }
