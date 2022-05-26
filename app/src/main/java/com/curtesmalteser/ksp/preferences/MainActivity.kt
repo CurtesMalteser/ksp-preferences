@@ -18,7 +18,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Log.d(this::class.java.name, "Is MainActivity? ${TestMyKspImpl().mainactivity}")
+        Log.d(this::class.java.name, "Is MainActivity? ${TestMyKspImpl().testmyksp}")
 
         setContent {
             KsPreferencesTheme {

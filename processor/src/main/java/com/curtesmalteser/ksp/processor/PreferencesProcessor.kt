@@ -1,22 +1,19 @@
 package com.curtesmalteser.ksp.processor
 
 import com.curtesmalteser.ksp.annotation.Preferences
-import com.google.devtools.ksp.processing.Dependencies
-import com.google.devtools.ksp.processing.KSPLogger
-import com.google.devtools.ksp.processing.Resolver
-import com.google.devtools.ksp.processing.SymbolProcessor
+import com.google.devtools.ksp.processing.*
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSNode
 import com.google.devtools.ksp.visitor.KSTopDownVisitor
 import java.io.OutputStreamWriter
-import com.google.devtools.ksp.processing.CodeGenerator
 
 /**
  * Created by António Bastião on 26.05.22
  * Refer to <a href="https://github.com/CurtesMalteser">CurtesMalteser github</a>
  */
-class PreferencesProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) : SymbolProcessor {
+class PreferencesProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) :
+    SymbolProcessor {
 
     private var invoked = false
 
@@ -34,23 +31,22 @@ class PreferencesProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogg
             val allFiles = resolver.getSymbolsWithAnnotation(name)
                 .filterIsInstance<KSClassDeclaration>()
 
-            allFiles.toList().first().let { declaration ->
+            allFiles.toList().map { declaration ->
                 val fileName = declaration.simpleName.asString()
                 val className = "${fileName}Impl"
-                    codeGenerator.createNewFile(Dependencies(false), "", className, "kt").use { output ->
-                    OutputStreamWriter(output).use { writer ->
-                        writer.write("package ${declaration.packageName.asString()}\n\n")
-                        writer.write("class $className : $fileName {\n")
+                codeGenerator.createNewFile(Dependencies(false), "", className, "kt")
+                    .use { output ->
+                        OutputStreamWriter(output).use { writer ->
+                            writer.write("package ${declaration.packageName.asString()}\n\n")
+                            writer.write("class $className : $fileName {\n")
 
-                        val visitor = ClassVisitor()
-                        resolver.getAllFiles().forEach { file ->
-                            file.accept(visitor, writer)
+                            val visitor = ClassVisitor()
+                            declaration.containingFile?.accept(visitor, writer)
+
+                            writer.write("}\n")
+                            writer.close()
                         }
-
-                        writer.write("}\n")
-                        writer.close()
                     }
-                }
 
             }
         }
@@ -68,7 +64,17 @@ class ClassVisitor : KSTopDownVisitor<OutputStreamWriter, Unit>() {
         data: OutputStreamWriter
     ) {
         super.visitClassDeclaration(classDeclaration, data)
-        val symbolName = classDeclaration.simpleName.asString().lowercase()
-        data.write("    val $symbolName = true\n")
+        classDeclaration.let {
+            it.annotations.firstOrNull { annotation ->
+                annotation.annotationType.resolve().declaration.qualifiedName?.asString() == Preferences::class.qualifiedName
+            }?.let {
+
+                val symbolName = classDeclaration.simpleName.asString().lowercase()
+
+                data.write("    val $symbolName = true\n")
+            }
+
+        }
+
     }
 }
