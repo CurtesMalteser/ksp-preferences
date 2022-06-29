@@ -11,14 +11,14 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.curtesmalteser.ksp.annotation.Preferences
+import com.curtesmalteser.ksp.annotation.WithPreferences
 import com.curtesmalteser.ksp.preferences.ui.theme.KsPreferencesTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Log.d(this::class.java.name, "Is MainActivity? ${TestMyKspImpl().testmyksp}")
+        Log.d(this::class.java.name, "Is MainActivity? ${TestMyKspImpl(this).testmyksp}")
 
         setContent {
             KsPreferencesTheme {
@@ -47,5 +47,5 @@ fun DefaultPreview() {
     }
 }
 
-@Preferences
+@WithPreferences
 interface TestMyKsp

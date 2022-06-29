@@ -1,6 +1,6 @@
 package com.curtesmalteser.ksp.processor
 
-import com.curtesmalteser.ksp.annotation.Preferences
+import com.curtesmalteser.ksp.annotation.WithPreferences
 import com.google.devtools.ksp.processing.*
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotated
@@ -25,7 +25,7 @@ class PreferencesProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogg
         }
         invoked = true
 
-        Preferences::class.qualifiedName?.let { name ->
+        WithPreferences::class.qualifiedName?.let { name ->
 
             logger.warn(name)
 
@@ -38,13 +38,16 @@ class PreferencesProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogg
                 codeGenerator.createNewFile(Dependencies(false), "", className, "kt")
                     .use { output ->
                         OutputStreamWriter(output).use { writer ->
-                            writer.write("package ${declaration.packageName.asString()}\n\n")
-                            writer.write("class $className : $fileName {\n")
+                            writer.write("package ${declaration.packageName.asString()}")
+                            writer.appendLine().appendLine()
+                            writer.write("import android.content.Context")
+                            writer.appendLine().appendLine()
+                            writer.write("class $className(context: Context) : $fileName {\n")
 
                             val visitor = ClassVisitor()
                             declaration.containingFile?.accept(visitor, writer)
 
-                            writer.write("}\n")
+                            writer.write("}")
                             writer.close()
                         }
                     }
@@ -67,7 +70,7 @@ class ClassVisitor : KSTopDownVisitor<OutputStreamWriter, Unit>() {
         super.visitClassDeclaration(classDeclaration, data)
         classDeclaration.let {
             it.annotations.firstOrNull { annotation ->
-                annotation.annotationType.resolve().declaration.qualifiedName?.asString() == Preferences::class.qualifiedName
+                annotation.annotationType.resolve().declaration.qualifiedName?.asString() == WithPreferences::class.qualifiedName
             }?.run { it }
         }?.let {
             if (it.classKind == ClassKind.INTERFACE) {
