@@ -2,10 +2,7 @@ package com.curtesmalteser.ksp.processor
 
 import com.curtesmalteser.ksp.annotation.WithPreferences
 import com.google.devtools.ksp.processing.*
-import com.google.devtools.ksp.symbol.ClassKind
-import com.google.devtools.ksp.symbol.KSAnnotated
-import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSNode
+import com.google.devtools.ksp.symbol.*
 import com.google.devtools.ksp.visitor.KSTopDownVisitor
 import java.io.OutputStreamWriter
 
@@ -60,8 +57,8 @@ class PreferencesProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogg
 }
 
 class ClassVisitor(private val logger: KSPLogger) : KSTopDownVisitor<OutputStreamWriter, Unit>() {
-    override fun defaultHandler(node: KSNode, data: OutputStreamWriter) {
-    }
+
+    override fun defaultHandler(node: KSNode, data: OutputStreamWriter) = Unit
 
     override fun visitClassDeclaration(
         classDeclaration: KSClassDeclaration,
@@ -96,13 +93,13 @@ class ClassVisitor(private val logger: KSPLogger) : KSTopDownVisitor<OutputStrea
         data: OutputStreamWriter
     ) {
         classDeclaration.getAllFunctions()
-            .filter { ksFunctionDeclaration -> ksFunctionDeclaration.isAbstract }
-            .filter { ksFunctionDeclaration -> ksFunctionDeclaration.parameters.size == 1 }
+            .filter { declaration -> declaration.modifiers.contains(Modifier.SUSPEND) }
+            .filter { declaration -> declaration.isAbstract }
+            .filter { declaration -> declaration.parameters.size == 1 }
             .forEach {
-
                 it.parameters.first().let { parameter ->
                     data.write(
-                        """    override fun ${parameter.parent}(${parameter}: ${parameter.type}){
+                        """    override suspend fun ${parameter.parent}(${parameter}: ${parameter.type}){
                             |       TODO("Not yet implemented")
                             |    }
                         """.trimMargin()
