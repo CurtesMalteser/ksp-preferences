@@ -44,7 +44,7 @@ class PreferencesProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogg
                             writer.appendLine().appendLine()
                             writer.write("class $className(context: Context) : $fileName {\n")
 
-                            val visitor = ClassVisitor()
+                            val visitor = ClassVisitor(logger)
                             declaration.containingFile?.accept(visitor, writer)
 
                             writer.write("}")
@@ -59,7 +59,7 @@ class PreferencesProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogg
     }
 }
 
-class ClassVisitor : KSTopDownVisitor<OutputStreamWriter, Unit>() {
+class ClassVisitor(private val logger: KSPLogger) : KSTopDownVisitor<OutputStreamWriter, Unit>() {
     override fun defaultHandler(node: KSNode, data: OutputStreamWriter) {
     }
 
@@ -68,6 +68,9 @@ class ClassVisitor : KSTopDownVisitor<OutputStreamWriter, Unit>() {
         data: OutputStreamWriter
     ) {
         super.visitClassDeclaration(classDeclaration, data)
+
+        logger.logging("Visiting declaration of: ${classDeclaration.simpleName.getShortName()}")
+
         classDeclaration.let {
             it.annotations.firstOrNull { annotation ->
                 annotation.annotationType.resolve().declaration.qualifiedName?.asString() == WithPreferences::class.qualifiedName
@@ -75,9 +78,38 @@ class ClassVisitor : KSTopDownVisitor<OutputStreamWriter, Unit>() {
         }?.let {
             if (it.classKind == ClassKind.INTERFACE) {
                 val symbolName = classDeclaration.simpleName.asString().lowercase()
-                data.write("    val $symbolName = true\n")
+
+                data.apply {
+                    appendLine()
+                    write("    val $symbolName = true\n")
+                    appendLine()
+                }
+
+                writeFunction(classDeclaration, data)
             }
         }
 
+    }
+
+    private fun writeFunction(
+        classDeclaration: KSClassDeclaration,
+        data: OutputStreamWriter
+    ) {
+        classDeclaration.getAllFunctions()
+            .filter { ksFunctionDeclaration -> ksFunctionDeclaration.isAbstract }
+            .filter { ksFunctionDeclaration -> ksFunctionDeclaration.parameters.size == 1 }
+            .forEach {
+
+                it.parameters.first().let { parameter ->
+                    data.write(
+                        """    override fun ${parameter.parent}(${parameter}: ${parameter.type}){
+                            |       TODO("Not yet implemented")
+                            |    }
+                        """.trimMargin()
+                    )
+                    data.appendLine().appendLine()
+                }
+
+            }
     }
 }

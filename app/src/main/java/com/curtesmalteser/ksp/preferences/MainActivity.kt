@@ -48,4 +48,7 @@ fun DefaultPreview() {
 }
 
 @WithPreferences
-interface TestMyKsp
+interface TestMyKsp {
+    fun testInt(myInt: Int)
+    fun testString(myString: String)
+}
