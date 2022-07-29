@@ -1,6 +1,8 @@
 package com.curtesmalteser.ksp.processor
 
 import com.curtesmalteser.ksp.annotation.WithPreferences
+import com.curtesmalteser.ksp.writer.Accumulator
+import com.curtesmalteser.ksp.writer.Writer
 import com.google.devtools.ksp.processing.*
 import com.google.devtools.ksp.symbol.*
 import com.google.devtools.ksp.visitor.KSTopDownVisitor
@@ -34,7 +36,8 @@ class PreferencesProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogg
                 val className = "${fileName}Impl"
                 codeGenerator.createNewFile(Dependencies(false), "", className, "kt")
                     .use { output ->
-                        OutputStreamWriter(output).use { writer ->
+                        Writer(output, declaration, logger, Accumulator()).write()
+                       /* OutputStreamWriter(output).use { writer ->
                             writer.write("package ${declaration.packageName.asString()}")
                             writer.appendLine().appendLine()
                             writer.write("import android.content.Context")
@@ -46,7 +49,7 @@ class PreferencesProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogg
 
                             writer.write("}")
                             writer.close()
-                        }
+                        }*/
                     }
 
             }
@@ -56,7 +59,7 @@ class PreferencesProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogg
     }
 }
 
-class ClassVisitor(private val logger: KSPLogger) : KSTopDownVisitor<OutputStreamWriter, Unit>() {
+class ClassVisitor(private val logger: KSPLogger, private val writer: Writer) : KSTopDownVisitor<OutputStreamWriter, Unit>() {
 
     override fun defaultHandler(node: KSNode, data: OutputStreamWriter) = Unit
 
@@ -76,37 +79,16 @@ class ClassVisitor(private val logger: KSPLogger) : KSTopDownVisitor<OutputStrea
             if (it.classKind == ClassKind.INTERFACE) {
                 val symbolName = classDeclaration.simpleName.asString().lowercase()
 
-                data.apply {
+               /* data.apply {
                     appendLine()
                     write("    val $symbolName = true\n")
                     appendLine()
-                }
+                }*/
 
-                writeFunction(classDeclaration, data)
+               writer.writeFunction(classDeclaration)
             }
         }
 
     }
 
-    private fun writeFunction(
-        classDeclaration: KSClassDeclaration,
-        data: OutputStreamWriter
-    ) {
-        classDeclaration.getAllFunctions()
-            .filter { declaration -> declaration.modifiers.contains(Modifier.SUSPEND) }
-            .filter { declaration -> declaration.isAbstract }
-            .filter { declaration -> declaration.parameters.size == 1 }
-            .forEach {
-                it.parameters.first().let { parameter ->
-                    data.write(
-                        """    override suspend fun ${parameter.parent}(${parameter}: ${parameter.type}){
-                            |       TODO("Not yet implemented")
-                            |    }
-                        """.trimMargin()
-                    )
-                    data.appendLine().appendLine()
-                }
-
-            }
-    }
 }
