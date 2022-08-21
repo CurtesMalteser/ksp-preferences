@@ -1,6 +1,7 @@
 package com.curtesmalteser.ksp.writer
 
 import com.curtesmalteser.ksp.processor.ClassVisitor
+import com.google.devtools.ksp.innerArguments
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSValueParameter
@@ -24,22 +25,10 @@ class Writer(
     init {
         writer = OutputStreamWriter(output)
     }
-    /**
-     * Key for values stored in Preferences. Type T is the type of the value associated with the
-     * Key.
-     *
-     * T must be one of the following: Boolean, Int, Long, Float, String, Set<String>.
-     *
-     * Construct Keys for your data type using: [booleanPreferencesKey], [intPreferencesKey],
-     * [longPreferencesKey], [floatPreferencesKey], [stringPreferencesKey], [stringSetPreferencesKey]
-     */
+
     fun writeFunction(
         classDeclaration: KSClassDeclaration,
     ) {
-
-        val symbolName = classDeclaration.simpleName.asString().lowercase()
-
-        accumulator.storeProperty("    val $symbolName = true\n")
 
         classDeclaration.getAllFunctions()
             .filter { declaration -> declaration.modifiers.contains(Modifier.SUSPEND) }
@@ -47,11 +36,30 @@ class Writer(
             .filter { declaration -> declaration.parameters.size == 1 }
             .forEach {
                 it.parameters.first().let { parameter ->
+
                     parameter.generateKey()
 
+                    val paramType = if (parameter.type.toString() == "Set") {
+
+                        val genericType = parameter.type
+                            .resolve()
+                            .innerArguments
+                            .first()
+                            .type
+                            .toString()
+
+                        if (genericType == "String") {
+                            "Set<String>"
+                        } else throw Exception("Type not supported: Set<$genericType>")
+                    } else {
+                        parameter.type.toString()
+                    }
+
                     accumulator.storeFunction(
-                        """    override suspend fun ${parameter.parent}(${parameter}: ${parameter.type}){
-                            |       TODO("Not yet implemented")
+                        """    override suspend fun ${parameter.parent}(${parameter}: ${paramType}){
+                            |        context.dataStore.edit {
+                            |            it[${parameter}Key] = $parameter
+                            |        }
                             |    }
                         """.trimMargin()
                     )
@@ -67,14 +75,16 @@ class Writer(
 
         declaration.containingFile?.accept(visitor, writer)
 
+        accumulator.storeImport("import androidx.datastore.preferences.core.edit")
+
+
         writer.write("package ${declaration.packageName.asString()}")
         writer.appendLine().appendLine()
         writer.write("import android.content.Context")
-            logger.warn("Test: before import")
-            writer.appendLine()
+        writer.appendLine()
         accumulator.importSet.forEach {
-            logger.warn("Test: $it")
             writer.write(it)
+            writer.appendLine()
         }
 
         writer.appendLine().appendLine()
@@ -82,11 +92,12 @@ class Writer(
         val fileName = declaration.simpleName.asString()
         val className = "${fileName}Impl"
 
-        writer.write("class $className(context: Context) : $fileName {\n")
+        writer.write("class $className(private val context: Context) : $fileName {\n")
 
         writer.appendLine().appendLine()
 
         accumulator.propertySet.forEach {
+            logger.warn(it)
             writer.write(it)
             writer.appendLine().appendLine()
         }
@@ -101,32 +112,20 @@ class Writer(
     }
 
     private fun KSValueParameter.generateKey() {
-        when {
-            type.toString() == "Boolean" -> {
 
-                logger.warn("test: $type: parameter: $this")
-            }
-            type.toString() == "Int" -> {
-                accumulator.storeImport("import androidx.datastore.preferences.core.intPreferencesKey")
-                accumulator.storeProperty("    val EXAMPLE_COUNTER = intPreferencesKey(\"example_counter\")")
-                logger.warn("test: $type: parameter: ${accumulator.importSet}")
-            }
-            type.toString() == "Long" -> {
+        val storeProperty = { type: String ->
+            val preferencesKey = "${type.replaceFirstChar { it.lowercase() }}PreferencesKey"
+            accumulator.storeImport("import androidx.datastore.preferences.core.$preferencesKey")
+            accumulator.storeProperty("    private val ${this}Key = $preferencesKey(\"$this\")")
+        }
 
-                logger.warn("test: $type: parameter: $this")
-            }
-            type.toString() == "Float" -> {
-
-                logger.warn("test: $type: parameter: $this")
-            }
-            type.toString() == "String" -> {
-
-                logger.warn("test: $type: parameter: $this")
-            }
-            type.toString() == "Set<String>" -> {
-
-                logger.warn("test: $type: parameter: $this")
-            }
+        when (val typeString = type.toString()) {
+            "Boolean" -> storeProperty(typeString)
+            "Int" -> storeProperty(typeString)
+            "Long" -> storeProperty(typeString)
+            "Float" -> storeProperty(typeString)
+            "String" -> storeProperty(typeString)
+            "Set" -> storeProperty("stringSet")
         }
     }
 

@@ -2,7 +2,6 @@ package com.curtesmalteser.ksp.preferences
 
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,28 +13,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.lifecycleScope
 import com.curtesmalteser.ksp.annotation.WithPreferences
 import com.curtesmalteser.ksp.preferences.ui.theme.KsPreferencesTheme
 import kotlinx.coroutines.launch
 
-class MainActivity : ComponentActivity() {
+// At the top level of your kotlin file:
+val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
-    val EXAMPLE_COUNTER = intPreferencesKey("example_counter")
+class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        Log.d(this::class.java.name, "Is MainActivity? ${TestMyKspImpl(this).testmyksp}")
+        val test = TestMyKspImpl(this)
 
         lifecycleScope.launch {
-            dataStore.edit { settings ->
-                settings[EXAMPLE_COUNTER] = 1
-            }
+            test.testInt(2)
         }
 
         setContent {
@@ -67,9 +62,10 @@ fun DefaultPreview() {
 
 @WithPreferences
 interface TestMyKsp {
+    suspend fun testBoolean(myBoolean: Boolean)
     suspend fun testInt(myInt: Int)
+    suspend fun testLong(myLong: Long)
+    suspend fun testFloat(myFloat: Float)
     suspend fun testString(myString: String)
+    suspend fun testStringSet(myStringSet: Set<String>)
 }
-
-// At the top level of your kotlin file:
-val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
