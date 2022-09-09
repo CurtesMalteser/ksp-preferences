@@ -2,8 +2,10 @@ package com.curtesmalteser.ksp.writer
 
 import com.curtesmalteser.ksp.processor.ClassVisitor
 import com.google.devtools.ksp.innerArguments
+import com.google.devtools.ksp.isAbstract
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSValueParameter
 import com.google.devtools.ksp.symbol.Modifier
 import java.io.OutputStream
@@ -69,18 +71,45 @@ class Writer(
 
     }
 
+    fun writeProperty(classDeclaration: KSClassDeclaration) {
+
+        classDeclaration.getAllProperties()
+            .filter { declaration -> declaration.isAbstract() }
+            .filter { declaration ->
+                declaration.type.toString() == "Flow"
+            }
+            .forEach {
+
+                val returnType = it.type
+                    .resolve().toString()
+
+               val property =  """    override val $it: $returnType = context.dataStore.data
+                   |    .map { preferences ->
+                   |        preferences[${it.toString().replace("Flow", "Key")}] ?: ${it.getDefaultValues()}
+                   |    }
+                   """.trimMargin()
+
+                accumulator.storeProperty(property)
+
+            }
+
+        accumulator.storeImport("kotlinx.coroutines.flow.map")
+        accumulator.storeImport("kotlinx.coroutines.flow.Flow")
+
+    }
+
     fun write() {
 
         val visitor = ClassVisitor(logger, this)
 
         declaration.containingFile?.accept(visitor, writer)
 
-        accumulator.storeImport("import androidx.datastore.preferences.core.edit")
+        accumulator.storeImport("androidx.datastore.preferences.core.edit")
 
 
         writer.write("package ${declaration.packageName.asString()}")
         writer.appendLine().appendLine()
-        writer.write("import android.content.Context")
+        accumulator.storeImport("android.content.Context")
         writer.appendLine()
         accumulator.importSet.forEach {
             writer.write(it)
@@ -97,7 +126,6 @@ class Writer(
         writer.appendLine().appendLine()
 
         accumulator.propertySet.forEach {
-            logger.warn(it)
             writer.write(it)
             writer.appendLine().appendLine()
         }
@@ -115,7 +143,7 @@ class Writer(
 
         val storeProperty = { type: String ->
             val preferencesKey = "${type.replaceFirstChar { it.lowercase() }}PreferencesKey"
-            accumulator.storeImport("import androidx.datastore.preferences.core.$preferencesKey")
+            accumulator.storeImport("androidx.datastore.preferences.core.$preferencesKey")
             accumulator.storeProperty("    private val ${this}Key = $preferencesKey(\"$this\")")
         }
 
@@ -127,6 +155,18 @@ class Writer(
             "String" -> storeProperty(typeString)
             "Set" -> storeProperty("stringSet")
         }
+    }
+
+    private fun KSPropertyDeclaration.getDefaultValues() : String{
+       return when (type.resolve().toString()) {
+            "Flow<Boolean>" -> "false"
+            "Flow<Int>" -> "0"
+            "Flow<Long>" -> "0L"
+            "Flow<Float>" -> "0F"
+            "Flow<String>" -> "\"\""
+            "Flow<Set<String>>" -> "emptySet()"
+           else -> throw UnsupportedOperationException("Type not supported: $type")
+       }
     }
 
 }

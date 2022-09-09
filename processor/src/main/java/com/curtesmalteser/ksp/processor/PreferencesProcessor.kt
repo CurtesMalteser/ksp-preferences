@@ -4,7 +4,10 @@ import com.curtesmalteser.ksp.annotation.WithPreferences
 import com.curtesmalteser.ksp.writer.Accumulator
 import com.curtesmalteser.ksp.writer.Writer
 import com.google.devtools.ksp.processing.*
-import com.google.devtools.ksp.symbol.*
+import com.google.devtools.ksp.symbol.ClassKind
+import com.google.devtools.ksp.symbol.KSAnnotated
+import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSNode
 import com.google.devtools.ksp.visitor.KSTopDownVisitor
 import java.io.OutputStreamWriter
 
@@ -37,19 +40,6 @@ class PreferencesProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogg
                 codeGenerator.createNewFile(Dependencies(false), "", className, "kt")
                     .use { output ->
                         Writer(output, declaration, logger, Accumulator()).write()
-                       /* OutputStreamWriter(output).use { writer ->
-                            writer.write("package ${declaration.packageName.asString()}")
-                            writer.appendLine().appendLine()
-                            writer.write("import android.content.Context")
-                            writer.appendLine().appendLine()
-                            writer.write("class $className(context: Context) : $fileName {\n")
-
-                            val visitor = ClassVisitor(logger)
-                            declaration.containingFile?.accept(visitor, writer)
-
-                            writer.write("}")
-                            writer.close()
-                        }*/
                     }
 
             }
@@ -59,7 +49,8 @@ class PreferencesProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogg
     }
 }
 
-class ClassVisitor(private val logger: KSPLogger, private val writer: Writer) : KSTopDownVisitor<OutputStreamWriter, Unit>() {
+class ClassVisitor(private val logger: KSPLogger, private val writer: Writer) :
+    KSTopDownVisitor<OutputStreamWriter, Unit>() {
 
     override fun defaultHandler(node: KSNode, data: OutputStreamWriter) = Unit
 
@@ -77,15 +68,8 @@ class ClassVisitor(private val logger: KSPLogger, private val writer: Writer) : 
             }?.run { it }
         }?.let {
             if (it.classKind == ClassKind.INTERFACE) {
-                val symbolName = classDeclaration.simpleName.asString().lowercase()
-
-               /* data.apply {
-                    appendLine()
-                    write("    val $symbolName = true\n")
-                    appendLine()
-                }*/
-
-               writer.writeFunction(classDeclaration)
+                writer.writeFunction(classDeclaration)
+                writer.writeProperty(classDeclaration)
             }
         }
 

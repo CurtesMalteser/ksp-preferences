@@ -17,6 +17,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.lifecycleScope
 import com.curtesmalteser.ksp.annotation.WithPreferences
 import com.curtesmalteser.ksp.preferences.ui.theme.KsPreferencesTheme
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 // At the top level of your kotlin file:
@@ -62,6 +63,12 @@ fun DefaultPreview() {
 
 @WithPreferences
 interface TestMyKsp {
+    val myBooleanFlow: Flow<Boolean>
+    val myIntFlow: Flow<Int>
+    val myLongFlow: Flow<Long>
+    val myFloatFlow: Flow<Float>
+    val myStringFlow: Flow<String>
+    val myStringSetFlow: Flow<Set<String>>
     suspend fun testBoolean(myBoolean: Boolean)
     suspend fun testInt(myInt: Int)
     suspend fun testLong(myLong: Long)

@@ -5,8 +5,8 @@ interface IAccumulator {
     val propertySet: Set<String>
     val functionSet: Set<String>
     fun storeImport(import: String): Boolean
-    fun storeProperty(import: String): Boolean
-    fun storeFunction(import: String): Boolean
+    fun storeProperty(declaration: String): Boolean
+    fun storeFunction(declaration: String): Boolean
 }
 
 /**
@@ -24,9 +24,13 @@ class Accumulator : IAccumulator {
     private val _functionSet: MutableSet<String> = mutableSetOf()
     override val functionSet: Set<String> = _functionSet
 
-    override fun storeImport(import: String) = _importSet.add(import)
+    override fun storeImport(import: String) = _importSet.add("$IMPORT $import")
 
-    override fun storeProperty(import: String) = _propertySet.add(import)
+    override fun storeProperty(declaration: String) = _propertySet.add(declaration)
 
-    override fun storeFunction(import: String) = _functionSet.add(import)
+    override fun storeFunction(declaration: String) = _functionSet.add(declaration)
+
+    private companion object {
+        const val IMPORT = "import"
+    }
 }
