@@ -25,6 +25,7 @@ class Writer(
     private val writer: OutputStreamWriter
 
     init {
+        logger.warn("init processing")
         writer = OutputStreamWriter(output)
     }
 
@@ -59,7 +60,7 @@ class Writer(
 
                     accumulator.storeFunction(
                         """    override suspend fun ${parameter.parent}(${parameter}: ${paramType}){
-                            |        context.dataStore.edit {
+                            |        dataStore.edit {
                             |            it[${parameter}Key] = $parameter
                             |        }
                             |    }
@@ -83,7 +84,7 @@ class Writer(
                 val returnType = it.type
                     .resolve().toString()
 
-               val property =  """    override val $it: $returnType = context.dataStore.data
+               val property =  """    override val $it: $returnType = dataStore.data
                    |    .map { preferences ->
                    |        preferences[${it.toString().replace("Flow", "Key")}] ?: ${it.getDefaultValues()}
                    |    }
@@ -109,7 +110,8 @@ class Writer(
 
         writer.write("package ${declaration.packageName.asString()}")
         writer.appendLine().appendLine()
-        accumulator.storeImport("android.content.Context")
+        accumulator.storeImport("androidx.datastore.core.DataStore")
+        accumulator.storeImport("androidx.datastore.preferences.core.Preferences")
         writer.appendLine()
         accumulator.importSet.forEach {
             writer.write(it)
@@ -121,7 +123,7 @@ class Writer(
         val fileName = declaration.simpleName.asString()
         val className = "${fileName}Impl"
 
-        writer.write("class $className(private val context: Context) : $fileName {\n")
+        writer.write("class $className(private val dataStore: DataStore<Preferences>) : $fileName {\n")
 
         writer.appendLine().appendLine()
 
