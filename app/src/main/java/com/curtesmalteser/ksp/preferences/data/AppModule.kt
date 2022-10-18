@@ -14,7 +14,6 @@ import dagger.hilt.components.SingletonComponent
  * Created by António Bastião on 02.10.22
  * Refer to <a href="https://github.com/CurtesMalteser">CurtesMalteser github</a>
  */
-// At the top level of your kotlin file:
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
 @Module
