@@ -20,16 +20,16 @@ class Writer(
     private val declaration: KSClassDeclaration,
     private val logger: KSPLogger,
     private val accumulator: IAccumulator,
-) {
+) : IWriter {
 
     private val writer: OutputStreamWriter
 
     init {
-        logger.warn("init processing")
+        logger.warn("Preferences Writer init processing")
         writer = OutputStreamWriter(output)
     }
 
-    fun writeFunction(
+    override fun writeFunction(
         classDeclaration: KSClassDeclaration,
     ) {
 
@@ -72,7 +72,7 @@ class Writer(
 
     }
 
-    fun writeProperty(classDeclaration: KSClassDeclaration) {
+    override fun writeProperty(classDeclaration: KSClassDeclaration) {
 
         classDeclaration.getAllProperties()
             .filter { declaration -> declaration.isAbstract() }
@@ -99,7 +99,7 @@ class Writer(
 
     }
 
-    fun write() {
+    override fun write() {
 
         val visitor = ClassVisitor(logger, this)
 

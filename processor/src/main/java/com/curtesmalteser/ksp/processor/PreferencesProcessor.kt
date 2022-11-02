@@ -1,13 +1,13 @@
 package com.curtesmalteser.ksp.processor
 
 import com.curtesmalteser.ksp.annotation.WithPreferences
+import com.curtesmalteser.ksp.annotation.WithProto
 import com.curtesmalteser.ksp.writer.Accumulator
+import com.curtesmalteser.ksp.writer.IWriter
+import com.curtesmalteser.ksp.writer.ProtoDataStoreWriter
 import com.curtesmalteser.ksp.writer.Writer
 import com.google.devtools.ksp.processing.*
-import com.google.devtools.ksp.symbol.ClassKind
-import com.google.devtools.ksp.symbol.KSAnnotated
-import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSNode
+import com.google.devtools.ksp.symbol.*
 import com.google.devtools.ksp.visitor.KSTopDownVisitor
 import java.io.OutputStreamWriter
 
@@ -31,8 +31,8 @@ class PreferencesProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogg
 
             logger.warn(name)
 
-            val allFiles = resolver.getSymbolsWithAnnotation(name)
-                .filterIsInstance<KSClassDeclaration>()
+            val allFiles =
+                resolver.getSymbolsWithAnnotation(name).filterIsInstance<KSClassDeclaration>()
 
             allFiles.toList().map { declaration ->
                 val fileName = declaration.simpleName.asString()
@@ -45,18 +45,35 @@ class PreferencesProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogg
             }
         }
 
+        WithProto::class.qualifiedName?.let { name ->
+
+            logger.warn(name)
+
+            val allFiles =
+                resolver.getSymbolsWithAnnotation(name).filterIsInstance<KSClassDeclaration>()
+
+            allFiles.toList().map { declaration ->
+                val fileName = declaration.simpleName.asString()
+                val className = "${fileName}Impl"
+                codeGenerator.createNewFile(Dependencies(false), "", className, "kt")
+                    .use { output ->
+                        ProtoDataStoreWriter(output, declaration, logger, Accumulator()).write()
+                    }
+
+            }
+        }
+
         return emptyList()
     }
 }
 
-class ClassVisitor(private val logger: KSPLogger, private val writer: Writer) :
+class ClassVisitor(private val logger: KSPLogger, private val writer: IWriter) :
     KSTopDownVisitor<OutputStreamWriter, Unit>() {
 
     override fun defaultHandler(node: KSNode, data: OutputStreamWriter) = Unit
 
     override fun visitClassDeclaration(
-        classDeclaration: KSClassDeclaration,
-        data: OutputStreamWriter
+        classDeclaration: KSClassDeclaration, data: OutputStreamWriter
     ) {
         super.visitClassDeclaration(classDeclaration, data)
 
@@ -64,7 +81,7 @@ class ClassVisitor(private val logger: KSPLogger, private val writer: Writer) :
 
         classDeclaration.let {
             it.annotations.firstOrNull { annotation ->
-                annotation.annotationType.resolve().declaration.qualifiedName?.asString() == WithPreferences::class.qualifiedName
+                isWithPreferences(annotation) || isWithProto(annotation)
             }?.run { it }
         }?.let {
             if (it.classKind == ClassKind.INTERFACE) {
@@ -74,5 +91,11 @@ class ClassVisitor(private val logger: KSPLogger, private val writer: Writer) :
         }
 
     }
+
+    private fun isWithProto(annotation: KSAnnotation) =
+        annotation.annotationType.resolve().declaration.qualifiedName?.asString() == WithProto::class.qualifiedName
+
+    private fun isWithPreferences(annotation: KSAnnotation) =
+        annotation.annotationType.resolve().declaration.qualifiedName?.asString() == WithPreferences::class.qualifiedName
 
 }
