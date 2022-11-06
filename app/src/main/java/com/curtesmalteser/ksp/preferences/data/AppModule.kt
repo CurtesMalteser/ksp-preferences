@@ -18,7 +18,7 @@ import dagger.hilt.components.SingletonComponent
  */
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
-val Context.settingsDataStore: DataStore<UserPreferences> by dataStore(
+val Context.userPrefsDataStore: DataStore<UserPreferences> by dataStore(
     fileName = "user_prefs.pb",
     serializer = UserPreferencesSerializer
 )
@@ -31,5 +31,14 @@ class AppModule {
     fun appPreferences(app: App) : DataStore<Preferences> = app.dataStore
 
     @Provides
-    fun appData(dataStore: DataStore<Preferences>): AppData = AppDataImpl(dataStore)
+    fun appData(prefs: DataStore<Preferences>): AppData = AppDataImpl(prefs)
+
+    @Provides
+    fun userPreferences(app: App) : DataStore<UserPreferences> = app.userPrefsDataStore
+
+    @Provides
+    fun userData(userPrefs: DataStore<UserPreferences>): UserPreferencesData = UserPreferencesDataImpl(userPrefs)
+
+    @Provides
+    fun repo(prefs: DataStore<Preferences>, userPrefs: DataStore<UserPreferences>): MainRepository = MainRepositoryImpl(prefs, userPrefs)
 }

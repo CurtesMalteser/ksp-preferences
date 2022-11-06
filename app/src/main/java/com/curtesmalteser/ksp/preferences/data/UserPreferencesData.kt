@@ -10,5 +10,5 @@ import com.curtesmalteser.ksp.preferences.UserPreferences
 @WithProto<UserPreferences>
 interface UserPreferencesData {
 
-    suspend fun x(userPreferences: UserPreferences)
+    suspend fun updateUserPrefs(prefs: UserPreferences.() -> UserPreferences)
 }

@@ -1,11 +1,15 @@
 package com.curtesmalteser.ksp.preferences.data
 
 import androidx.datastore.core.CorruptionException
+import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.protobuf.InvalidProtocolBufferException
 import com.curtesmalteser.ksp.preferences.UserPreferences
+import com.curtesmalteser.ksp.preferences.UserPreferencesOrBuilder
 import java.io.InputStream
 import java.io.OutputStream
+import javax.inject.Inject
 
 /**
  * Created by António Bastião on 09.10.22
@@ -15,7 +19,10 @@ interface MainRepository {
     fun saveSettings()
 }
 
-class MainRepositoryImpl() : MainRepository {
+class MainRepositoryImpl(
+    private val prefs: DataStore<Preferences>,
+    private val userPrefs: DataStore<UserPreferences>,
+) : MainRepository {
     override fun saveSettings() {
         TODO("Not yet implemented")
     }

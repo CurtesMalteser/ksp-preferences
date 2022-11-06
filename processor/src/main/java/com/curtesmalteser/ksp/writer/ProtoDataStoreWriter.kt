@@ -1,16 +1,13 @@
 package com.curtesmalteser.ksp.writer
 
-import com.curtesmalteser.ksp.annotation.WithPreferences
 import com.curtesmalteser.ksp.annotation.WithProto
 import com.curtesmalteser.ksp.processor.ClassVisitor
 import com.google.devtools.ksp.containingFile
-import com.google.devtools.ksp.innerArguments
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.Modifier
 import java.io.OutputStream
 import java.io.OutputStreamWriter
-import kotlin.reflect.cast
 
 /**
  * Created by António Bastião on 02.11.22
@@ -28,45 +25,33 @@ class ProtoDataStoreWriter(
     init {
         logger.warn("ProtoDataStoreWriter init processing")
         writer = OutputStreamWriter(output)
+
+        val argImport =  declaration.annotations.single { annotation ->
+            annotation.annotationType.resolve().declaration.qualifiedName?.asString() == WithProto::class.qualifiedName
+        }.let { annotation ->
+            val argType = annotation.annotationType.element?.typeArguments?.single()!!.type
+            val argImport = argType?.containingFile?.packageName?.getQualifier()
+            argImport!! + "." + argType
+        }
+
+        accumulator.storeImport(argImport)
     }
 
     override fun writeFunction(classDeclaration: KSClassDeclaration) {
-        classDeclaration.getAllFunctions()
+        declaration.getAllFunctions()
             .filter { declaration -> declaration.modifiers.contains(Modifier.SUSPEND) }
             .filter { declaration -> declaration.isAbstract }
             .filter { declaration -> declaration.parameters.size == 1 }.forEach {
                 it.parameters.first().let { parameter ->
 
-                    logger.warn("paramType ${classDeclaration.annotations.single { annotation ->
-                        annotation.annotationType.resolve().declaration.qualifiedName?.asString() == WithProto::class.qualifiedName
-                    }}")
-
                     val paramType = parameter.type.toString()
-
-                    val paramImport =  classDeclaration.annotations.single { annotation ->
-                        annotation.annotationType.resolve().declaration.qualifiedName?.asString() == WithProto::class.qualifiedName
-                    }.let {
-
-
-                        val genericType = it.annotationType
-                            .resolve()
-                            //.innerArguments
-                            //.first()
-                            //.type
-                            //.toString()
-
-                        val paramImport = it.annotationType.element?.typeArguments?.single()!!.type?.containingFile?.packageName?.getQualifier()
-                        logger.warn("arg: $paramImport")
-                        paramImport!! + "." + paramType
-                    }
-
-                    accumulator.storeImport(paramImport)
-
 
                     accumulator.storeFunction(
                         """    override suspend fun ${parameter.parent}(${parameter}: ${paramType}){
-                            |           TODO("Not yet implemented")
-                            |    }
+                        |        dataStore.updateData {
+                        |            ${parameter}(it)
+                        |        }
+                        |    }
                         """.trimMargin()
                     )
 

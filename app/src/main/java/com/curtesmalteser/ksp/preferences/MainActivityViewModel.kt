@@ -2,6 +2,7 @@ package com.curtesmalteser.ksp.preferences
 
 import androidx.lifecycle.ViewModel
 import com.curtesmalteser.ksp.preferences.data.AppData
+import com.curtesmalteser.ksp.preferences.data.MainRepository
 import dagger.hilt.android.scopes.ViewModelScoped
 import javax.inject.Inject
 
@@ -10,6 +11,6 @@ import javax.inject.Inject
  * Refer to <a href="https://github.com/CurtesMalteser">CurtesMalteser github</a>
  */
 @ViewModelScoped
-class MainActivityViewModel @Inject constructor(appData: AppData): ViewModel() {
+class MainActivityViewModel @Inject constructor(repository: MainRepository): ViewModel() {
 
 }
