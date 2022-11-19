@@ -35,9 +35,10 @@ class PreferencesProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogg
                 resolver.getSymbolsWithAnnotation(name).filterIsInstance<KSClassDeclaration>()
 
             allFiles.toList().map { declaration ->
+                val packageName = declaration.containingFile!!.packageName.asString()
                 val fileName = declaration.simpleName.asString()
                 val className = "${fileName}Impl"
-                codeGenerator.createNewFile(Dependencies(false), "", className, "kt")
+                codeGenerator.createNewFile(Dependencies(false), packageName, className, "kt")
                     .use { output ->
                         Writer(output, declaration, logger, Accumulator()).write()
                     }
@@ -53,9 +54,10 @@ class PreferencesProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogg
                 resolver.getSymbolsWithAnnotation(name).filterIsInstance<KSClassDeclaration>()
 
             allFiles.toList().map { declaration ->
+                val packageName = declaration.containingFile!!.packageName.asString()
                 val fileName = declaration.simpleName.asString()
                 val className = "${fileName}Impl"
-                codeGenerator.createNewFile(Dependencies(false), "", className, "kt")
+                codeGenerator.createNewFile(Dependencies(false), packageName, className, "kt")
                     .use { output ->
                         ProtoDataStoreWriter(output, declaration, logger, Accumulator()).write()
                     }

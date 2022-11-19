@@ -1,10 +1,7 @@
 package com.curtesmalteser.ksp.preferences.data
 
-import android.content.Context
 import androidx.datastore.core.DataStore
-import androidx.datastore.dataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.preferencesDataStore
 import com.curtesmalteser.ksp.preferences.App
 import com.curtesmalteser.ksp.preferences.UserPreferences
 import dagger.Module
@@ -21,7 +18,7 @@ import dagger.hilt.components.SingletonComponent
 class AppModule {
 
     @Provides
-    fun appPreferences(app: App) : DataStore<Preferences> = app.dataStore
+    fun appPreferences(app: App): DataStore<Preferences> = app.dataStore
 
     @Provides
     fun appData(prefs: DataStore<Preferences>): AppData = AppDataImpl(prefs)

@@ -8,6 +8,9 @@ plugins {
 }
 
 android {
+
+    namespace 'com.curtesmalteser.ksp.preferences'
+
     compileSdk 33
 
     defaultConfig {
@@ -27,39 +30,41 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            sourceSets {
-                main {
-                    java { srcDirs = ["build/generated/ksp/release/kotlin"]}
-                }
-            }
         }
         debug {
-            sourceSets {
-                main {
-                    java { srcDirs = ["build/generated/ksp/debug/kotlin"]}
-                }
-            }
         }
     }
+
+    sourceSets.configureEach {
+        kotlin.srcDir("$buildDir/generated/ksp/$name/kotlin/")
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
+
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '11'
     }
+
     buildFeatures {
         compose true
     }
+
     composeOptions {
         kotlinCompilerExtensionVersion compose_version
     }
+
     packagingOptions {
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
         }
     }
-    namespace 'com.curtesmalteser.ksp.preferences'
+}
+
+kapt {
+    correctErrorTypes = true
 }
 
 dependencies {
@@ -104,7 +109,7 @@ protobuf {
                 remove java
             }
             task.plugins {
-                javalite { }
+                javalite {}
             }
         }
     }
