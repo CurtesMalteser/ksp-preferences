@@ -7,7 +7,7 @@ import com.curtesmalteser.ksp.preferences.UserPreferences
  * Created by António Bastião on 18.10.22
  * Refer to <a href="https://github.com/CurtesMalteser">CurtesMalteser github</a>
  */
-@WithProto<UserPreferences>
+@WithProto
 interface UserPreferencesData {
 
     suspend fun updateUserPrefs(prefs: UserPreferences.() -> UserPreferences)

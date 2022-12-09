@@ -1,6 +1,5 @@
 package com.curtesmalteser.ksp.writer
 
-import com.curtesmalteser.ksp.annotation.WithProto
 import com.curtesmalteser.ksp.processor.ClassVisitor
 import com.google.devtools.ksp.containingFile
 import com.google.devtools.ksp.processing.KSPLogger
@@ -23,18 +22,8 @@ class ProtoDataStoreWriter(
     private val writer: OutputStreamWriter
 
     init {
-        logger.warn("ProtoDataStoreWriter init processing")
+        logger.info("ProtoDataStoreWriter: init processing")
         writer = OutputStreamWriter(output)
-
-        val argImport =  declaration.annotations.single { annotation ->
-            annotation.annotationType.resolve().declaration.qualifiedName?.asString() == WithProto::class.qualifiedName
-        }.let { annotation ->
-            val argType = annotation.annotationType.element?.typeArguments?.single()!!.type
-            val argImport = argType?.containingFile?.packageName?.getQualifier()
-            argImport!! + "." + argType
-        }
-
-        accumulator.storeImport(argImport)
     }
 
     override fun writeFunction(classDeclaration: KSClassDeclaration) {
@@ -44,7 +33,17 @@ class ProtoDataStoreWriter(
             .filter { declaration -> declaration.parameters.size == 1 }.forEach {
                 it.parameters.first().let { parameter ->
 
-                    val paramType = parameter.type.toString()
+                    logger.warn("argImport: ${parameter.type.element!!.typeArguments.first().type}")
+
+                    val paramType = parameter.type
+
+                    val argImport = paramType.let {
+                        val argImport = parameter.containingFile?.packageName?.getQualifier()
+                        argImport!! + "." + parameter.type.element!!.typeArguments.first().type
+                    }
+
+
+                    accumulator.storeImport(argImport)
 
                     accumulator.storeFunction(
                         """    override suspend fun ${parameter.parent}(${parameter}: ${paramType}){
@@ -101,5 +100,6 @@ class ProtoDataStoreWriter(
         }
 
         writer.write("}")
-        writer.close()    }
+        writer.close()
+    }
 }
