@@ -27,21 +27,22 @@ class ProtoDataStoreWriter(
     }
 
     override fun writeFunction(classDeclaration: KSClassDeclaration) {
-        declaration.getAllFunctions()
+        classDeclaration.getAllFunctions()
             .filter { declaration -> declaration.modifiers.contains(Modifier.SUSPEND) }
             .filter { declaration -> declaration.isAbstract }
-            .filter { declaration -> declaration.parameters.size == 1 }.forEach {
-                it.parameters.first().let { parameter ->
+            .filter { declaration -> declaration.parameters.size == 1 }.forEach { declaration ->
+                declaration.parameters.first().let { parameter ->
 
-                    logger.warn("argImport: ${parameter.type.element!!.typeArguments.first().type}")
+                    val importType = parameter.type.takeIf { it.resolve().isFunctionType }?.let {
+                        it.element!!.typeArguments.first().type
+                    }
 
                     val paramType = parameter.type
 
                     val argImport = paramType.let {
                         val argImport = parameter.containingFile?.packageName?.getQualifier()
-                        argImport!! + "." + parameter.type.element!!.typeArguments.first().type
+                        argImport!! + "." + importType
                     }
-
 
                     accumulator.storeImport(argImport)
 
@@ -67,13 +68,10 @@ class ProtoDataStoreWriter(
 
         declaration.containingFile?.accept(visitor, writer)
 
-        //accumulator.storeImport("androidx.datastore.preferences.core.edit")
-
-
         writer.write("package ${declaration.packageName.asString()}")
         writer.appendLine().appendLine()
         accumulator.storeImport("androidx.datastore.core.DataStore")
-        //accumulator.storeImport("androidx.datastore.preferences.core.Preferences")
+
         writer.appendLine()
         accumulator.importSet.forEach {
             writer.write(it)
