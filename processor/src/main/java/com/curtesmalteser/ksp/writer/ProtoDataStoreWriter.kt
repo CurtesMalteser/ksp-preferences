@@ -4,6 +4,8 @@ import com.curtesmalteser.ksp.processor.ClassVisitor
 import com.google.devtools.ksp.containingFile
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSTypeReference
+import com.google.devtools.ksp.symbol.KSValueParameter
 import com.google.devtools.ksp.symbol.Modifier
 import java.io.OutputStream
 import java.io.OutputStreamWriter
@@ -33,23 +35,29 @@ class ProtoDataStoreWriter(
             .filter { declaration -> declaration.parameters.size == 1 }.forEach { declaration ->
                 declaration.parameters.first().let { parameter ->
 
-                    val importType = parameter.type.takeIf { it.resolve().isFunctionType }?.let {
-                        it.element!!.typeArguments.first().type
+                    parameter.type.takeIf { it.isFunctionTypeWithBuilderArgument }?.let {
+                        it.element!!.typeArguments.map {
+                            it.type.toString()
+                        }.single { it != "Builder" }.let {
+                            accumulateImport(it, parameter)
+                            "$it.Builder"
+                        }.also {
+                            accumulateImport(it, parameter)
+                        }
+                    } ?: parameter.type.element!!.typeArguments.first().type.also {
+                        accumulateImport(it.toString(), parameter)
                     }
 
-                    val paramType = parameter.type
+                    val isBuilder: Boolean = parameter.type.isFunctionTypeWithBuilderArgument
 
-                    val argImport = paramType.let {
-                        val argImport = parameter.containingFile?.packageName?.getQualifier()
-                        argImport!! + "." + importType
-                    }
+                    val functionBody = if (isBuilder) "it.toBuilder()" else "it"
 
-                    accumulator.storeImport(argImport)
+                    val paramType: String = parameter.type.toString()
 
                     accumulator.storeFunction(
                         """    override suspend fun ${parameter.parent}(${parameter}: ${paramType}){
                         |        dataStore.updateData {
-                        |            ${parameter}(it)
+                        |            ${parameter}($functionBody)
                         |        }
                         |    }
                         """.trimMargin()
@@ -57,6 +65,14 @@ class ProtoDataStoreWriter(
 
                 }
             }
+    }
+
+    private fun accumulateImport(
+        it: String,
+        parameter: KSValueParameter
+    ) {
+        val argImport = parameter.containingFile?.packageName?.getQualifier()!! + "." + it
+        accumulator.storeImport(argImport)
     }
 
     override fun writeProperty(classDeclaration: KSClassDeclaration) {
@@ -101,3 +117,10 @@ class ProtoDataStoreWriter(
         writer.close()
     }
 }
+
+val KSTypeReference.isFunctionTypeWithBuilderArgument: Boolean
+    get() = takeIf { it.resolve().isFunctionType }
+        ?.element!!.typeArguments
+        .map {
+            it.type.toString()
+        }.contains("Builder")

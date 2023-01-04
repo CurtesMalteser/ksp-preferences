@@ -11,4 +11,5 @@ import com.curtesmalteser.ksp.preferences.UserPreferences
 interface UserPreferencesData {
     suspend fun updateUserPrefsIt(prefs: (UserPreferences) -> UserPreferences)
     suspend fun updateUserPrefsThis(prefs: UserPreferences.() -> UserPreferences)
+    suspend fun updateUserPrefsBuilder(prefs: (UserPreferences.Builder) -> UserPreferences)
 }
