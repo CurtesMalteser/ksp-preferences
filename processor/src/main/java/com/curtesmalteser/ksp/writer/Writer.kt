@@ -107,7 +107,6 @@ class Writer(
 
         accumulator.storeImport("androidx.datastore.preferences.core.edit")
 
-
         writer.write("package ${declaration.packageName.asString()}")
         writer.appendLine().appendLine()
         accumulator.storeImport("androidx.datastore.core.DataStore")

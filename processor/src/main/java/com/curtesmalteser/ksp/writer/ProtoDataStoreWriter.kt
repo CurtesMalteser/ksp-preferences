@@ -39,6 +39,7 @@ class ProtoDataStoreWriter(
                         it.element!!.typeArguments.map {
                             it.type.toString()
                         }.single { it != "Builder" }.let {
+                            accumulator.constructorArg = it
                             accumulateImport(it, parameter)
                             "$it.Builder"
                         }.also {
@@ -99,7 +100,7 @@ class ProtoDataStoreWriter(
         val fileName = declaration.simpleName.asString()
         val className = "${fileName}Impl"
 
-        writer.write("class $className(private val dataStore: DataStore<UserPreferences>) : $fileName {\n")
+        writer.write("class $className(private val dataStore: DataStore<${accumulator.constructorArg}>) : $fileName {\n")
 
         writer.appendLine().appendLine()
 

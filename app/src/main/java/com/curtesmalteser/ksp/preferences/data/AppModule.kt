@@ -30,6 +30,5 @@ class AppModule {
     fun userData(userPrefs: DataStore<UserPreferences>): UserPreferencesData = UserPreferencesDataImpl(userPrefs)
 
     @Provides
-    fun repo(prefs: AppData, userPrefs: UserPreferencesData): MainRepository =
-        MainRepositoryImpl(prefs, userPrefs)
+    fun repo(prefs: AppData, userPrefs: UserPreferencesData): MainRepository = MainRepositoryImpl(prefs, userPrefs)
 }
