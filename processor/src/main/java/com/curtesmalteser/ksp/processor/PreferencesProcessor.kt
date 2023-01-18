@@ -25,47 +25,45 @@ class PreferencesProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogg
         if (invoked) {
             return emptyList()
         }
+
         invoked = true
 
         WithPreferences::class.qualifiedName?.let { name ->
-
-            logger.warn(name)
-
-            val allFiles =
-                resolver.getSymbolsWithAnnotation(name).filterIsInstance<KSClassDeclaration>()
-
-            allFiles.toList().map { declaration ->
-                val packageName = declaration.containingFile!!.packageName.asString()
-                val fileName = declaration.simpleName.asString()
-                val className = "${fileName}Impl"
-                codeGenerator.createNewFile(Dependencies(false), packageName, className, "kt")
-                    .use { output ->
-                        Writer(output, declaration, logger, Accumulator()).write()
-                    }
-
-            }
+            generateClassesForAnnotation<WithPreferences>(name, resolver)
         }
 
         WithProto::class.qualifiedName?.let { name ->
-
-            logger.warn(name)
-
-            val allFiles =
-                resolver.getSymbolsWithAnnotation(name).filterIsInstance<KSClassDeclaration>()
-
-            allFiles.toList().map { declaration ->
-                val packageName = declaration.containingFile!!.packageName.asString()
-                val fileName = declaration.simpleName.asString()
-                val className = "${fileName}Impl"
-                codeGenerator.createNewFile(Dependencies(false), packageName, className, "kt")
-                    .use { output ->
-                        ProtoDataStoreWriter(output, declaration, logger, Accumulator()).write()
-                    }
-
-            }
+            generateClassesForAnnotation<WithProto>(name, resolver)
         }
 
         return emptyList()
+    }
+
+    private inline fun <reified T : Annotation> generateClassesForAnnotation(
+        name: String, resolver: Resolver
+    ) {
+        logger.warn(name)
+
+        val allFiles =
+            resolver.getSymbolsWithAnnotation(name).filterIsInstance<KSClassDeclaration>()
+
+        allFiles.toList().map { declaration ->
+            val packageName = declaration.containingFile!!.packageName.asString()
+            val fileName = declaration.simpleName.asString()
+            val className = "${fileName}Impl"
+            codeGenerator.createNewFile(
+                Dependencies(false, declaration.containingFile!!), packageName, className, "kt"
+            ).use { output ->
+                when {
+                    T::class == WithPreferences::class -> Writer(
+                        output, declaration, logger, Accumulator()
+                    ).write()
+                    T::class == WithProto::class -> ProtoDataStoreWriter(
+                        output, declaration, logger, Accumulator()
+                    ).write()
+                }
+            }
+        }
     }
 }
 
