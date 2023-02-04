@@ -1,6 +1,6 @@
 package com.curtesmalteser.ksp.writer
 
-import com.curtesmalteser.ksp.processor.ClassVisitor
+import com.curtesmalteser.ksp.visitor.ClassVisitor
 import com.google.devtools.ksp.containingFile
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSClassDeclaration
@@ -28,15 +28,15 @@ class ProtoDataStoreWriter(
         writer = OutputStreamWriter(output)
     }
 
-    override fun writeFunction(classDeclaration: KSClassDeclaration) {
-        classDeclaration.getAllFunctions()
+    override fun writeFunction() {
+        declaration.getAllFunctions()
             .filter { declaration -> declaration.modifiers.contains(Modifier.SUSPEND) }
             .filter { declaration -> declaration.isAbstract }
             .filter { declaration -> declaration.parameters.size == 1 }.forEach { declaration ->
                 declaration.parameters.first().let { parameter ->
 
-                    parameter.type.takeIf { it.isFunctionTypeWithBuilderArgument }?.let {
-                        it.element!!.typeArguments.map {
+                    parameter.type.takeIf { it.isFunctionTypeWithBuilderArgument }?.let { typeReference ->
+                        typeReference.element!!.typeArguments.map {
                             it.type.toString()
                         }.single { it != "Builder" }.let {
                             accumulator.constructorArg = it
@@ -76,7 +76,7 @@ class ProtoDataStoreWriter(
         accumulator.storeImport(argImport)
     }
 
-    override fun writeProperty(classDeclaration: KSClassDeclaration) {
+    override fun writeProperty() {
         logger.warn("writeProperty not implemented")
     }
 
@@ -119,7 +119,7 @@ class ProtoDataStoreWriter(
     }
 }
 
-val KSTypeReference.isFunctionTypeWithBuilderArgument: Boolean
+private val KSTypeReference.isFunctionTypeWithBuilderArgument: Boolean
     get() = takeIf { it.resolve().isFunctionType }
         ?.element!!.typeArguments
         .map {

@@ -1,6 +1,6 @@
 package com.curtesmalteser.ksp.writer
 
-import com.curtesmalteser.ksp.processor.ClassVisitor
+import com.curtesmalteser.ksp.visitor.ClassVisitor
 import com.google.devtools.ksp.innerArguments
 import com.google.devtools.ksp.isAbstract
 import com.google.devtools.ksp.processing.KSPLogger
@@ -29,11 +29,9 @@ class Writer(
         writer = OutputStreamWriter(output)
     }
 
-    override fun writeFunction(
-        classDeclaration: KSClassDeclaration,
-    ) {
+    override fun writeFunction() {
 
-        classDeclaration.getAllFunctions()
+        declaration.getAllFunctions()
             .filter { declaration -> declaration.modifiers.contains(Modifier.SUSPEND) }
             .filter { declaration -> declaration.isAbstract }
             .filter { declaration -> declaration.parameters.size == 1 }
@@ -72,9 +70,9 @@ class Writer(
 
     }
 
-    override fun writeProperty(classDeclaration: KSClassDeclaration) {
+    override fun writeProperty() {
 
-        classDeclaration.getAllProperties()
+        declaration.getAllProperties()
             .filter { declaration -> declaration.isAbstract() }
             .filter { declaration ->
                 declaration.type.toString() == "Flow"
