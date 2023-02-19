@@ -5,12 +5,17 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.curtesmalteser.ksp.preferences.ui.theme.KsPreferencesTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -24,12 +29,10 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             KsPreferencesTheme {
-                // A surface container using the 'background' color from the theme
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colors.background
+                    modifier = Modifier.fillMaxSize(), color = MaterialTheme.colors.background
                 ) {
-                    Greeting("Android")
+                    Greeting(viewModel.buttonsTextList)
                 }
             }
         }
@@ -37,14 +40,30 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String) {
-    Text(text = "Hello $name!")
+fun Greeting(buttonsTextList: List<String>) {
+    LazyColumn {
+        items(buttonsTextList.size) { index ->
+            Button(
+                onClick = { },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = 16.dp,
+                        top = 16.dp,
+                        end = 16.dp,
+                        bottom = 0.dp
+                    )
+            ) {
+                Text(text = "Test: ${buttonsTextList[index]}")
+            }
+        }
+    }
 }
 
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
     KsPreferencesTheme {
-        Greeting("Android")
+        Greeting(listOf("Int", "String"))
     }
 }
