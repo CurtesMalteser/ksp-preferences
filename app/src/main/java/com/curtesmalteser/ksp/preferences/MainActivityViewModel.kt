@@ -1,6 +1,7 @@
 package com.curtesmalteser.ksp.preferences
 
 import androidx.lifecycle.ViewModel
+import com.curtesmalteser.ksp.preferences.ui.navigation.PreferenceScreen
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -11,16 +12,9 @@ import javax.inject.Inject
 @HiltViewModel
 class MainActivityViewModel @Inject constructor() : ViewModel() {
 
-    val buttonsTextList by lazy {
-        listOf(
-            "Boolean",
-            "Int",
-            "Long",
-            "Float",
-            "String",
-            "Set<String>",
-            "UserPreferences",
-        )
-    }
+    val buttonsTextList: List<PreferenceScreen>
+        get() = PreferenceScreen.values().filterNot {
+            it == PreferenceScreen.PreferencesApp
+        }
 
 }
