@@ -9,7 +9,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.TextFieldDefaults.MinHeight
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -18,6 +19,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.curtesmalteser.ksp.preferences.ui.theme.KsPreferencesTheme
 import com.curtesmalteser.ksp.preferences.ui.utils.SharedColumn
 
@@ -40,19 +42,23 @@ private val shape by lazy {
 }
 
 @Composable
-fun ReusablePreferenceHandlerScreen() {
+fun <T : Any> ReusablePreferenceHandlerScreen(
+    viewModel: ReusablePreferenceHandlerViewModel<T> = viewModel()
+) {
+
+    val storedValue = viewModel.storedValueFlow.collectAsState(initial = "")
+
     SharedColumn {
-        var value by remember { mutableStateOf("") }
         OutlinedTextField(
-            value = value,
-            onValueChange = { value = it },
-            label = { Text("Enter text") },
+            value = storedValue.value.toString(),
+            onValueChange = { viewModel.storeValue(it) },
+            label = { Text(viewModel.label) },
             maxLines = 2,
             textStyle = TextStyle(color = Color.Blue, fontWeight = FontWeight.Bold),
             modifier = baseModifier.padding(bottom = 8.dp)
         )
         Text(
-            text = value,
+            text = storedValue.value.toString(),
             modifier = baseModifier
                 .padding(top = 8.dp)
                 .clip(shape)
@@ -68,6 +74,6 @@ fun ReusablePreferenceHandlerScreen() {
 @Composable
 fun ReusablePreferencePreview() {
     KsPreferencesTheme {
-        ReusablePreferenceHandlerScreen()
+        ReusablePreferenceHandlerScreen<Int>()
     }
 }

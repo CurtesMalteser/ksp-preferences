@@ -3,12 +3,13 @@ package com.curtesmalteser.ksp.preferences.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.curtesmalteser.ksp.preferences.ui.destination.bolean.BooleanPreferenceHandlerScreen
-import com.curtesmalteser.ksp.preferences.ui.destination.reusable.ReusablePreferenceHandlerScreen
+import com.curtesmalteser.ksp.preferences.ui.destination.reusable.*
 import com.curtesmalteser.ksp.preferences.ui.host.PreferencesScreen
 import com.curtesmalteser.ksp.preferences.ui.theme.KsPreferencesTheme
 
@@ -32,14 +33,32 @@ fun PreferencesAppNavHost(
         composable(route = PreferenceScreen.Boolean.toString()) {
             BooleanPreferenceHandlerScreen()
         }
+        composable(route = PreferenceScreen.Int.toString()) {
+            val viewModel : IntPreferenceHandlerViewModel = hiltViewModel()
+            ReusablePreferenceHandlerScreen(viewModel)
+        }
+        composable(route = PreferenceScreen.Long.toString()) {
+            val viewModel : LongPreferenceHandlerViewModel = hiltViewModel()
+            ReusablePreferenceHandlerScreen(viewModel)
 
-        PreferenceScreen.values().filter {
-            it != PreferenceScreen.PreferencesApp &&
-                    it != PreferenceScreen.Boolean
-        }.map {
-            composable(route = it.toString()) {
-                ReusablePreferenceHandlerScreen()
-            }
+        }
+        composable(route = PreferenceScreen.Float.toString()) {
+            val viewModel : FloatPreferenceHandlerViewModel = hiltViewModel()
+            ReusablePreferenceHandlerScreen(viewModel)
+
+        }
+        composable(route = PreferenceScreen.String.toString()) {
+            val viewModel : StringPreferenceHandlerViewModel = hiltViewModel()
+            ReusablePreferenceHandlerScreen(viewModel)
+
+        }
+        // FIXME: add specialized screen
+        composable(route = PreferenceScreen.SetString.toString()) {
+            BooleanPreferenceHandlerScreen()
+        }
+        // FIXME: add specialized screen
+        composable(route = PreferenceScreen.UserPreferences.toString()) {
+            BooleanPreferenceHandlerScreen()
         }
     }
 }
