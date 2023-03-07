@@ -6,7 +6,8 @@ import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Checkbox
 import androidx.compose.material.CheckboxDefaults
@@ -14,7 +15,6 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -22,6 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.curtesmalteser.ksp.preferences.ui.theme.KsPreferencesTheme
+import com.curtesmalteser.ksp.preferences.ui.utils.SharedScreen
 
 /**
  * Created by António Bastião on 04.03.23
@@ -55,18 +56,7 @@ fun BooleanPreferenceHandlerScreen(
         bottomStart = 8.dp
     )
 
-    Column(
-        modifier = Modifier
-            .fillMaxHeight()
-            .fillMaxWidth(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.Start,
-    ) {
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(16.dp)
-        ) {
+    SharedScreen {
             Checkbox(checked = state.value,
                 colors = CheckboxDefaults.colors(
                     checkedColor = Color.White,
@@ -92,7 +82,6 @@ fun BooleanPreferenceHandlerScreen(
                 },
                 modifier = Modifier.padding(start = 16.dp)
             )
-        }
     }
 }
 
