@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">KsPreferences</string>
+    <string name="add_string">Adds String to Set of Strings stored in Preferences</string>
 </resources>
