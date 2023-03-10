@@ -1,21 +1,24 @@
 package com.curtesmalteser.ksp.preferences.ui.destination.stringset
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
-import androidx.compose.material.Icon
-import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.Text
+import androidx.compose.material.*
+import androidx.compose.material.DismissValue.Default
 import androidx.compose.material.TextFieldDefaults.MinHeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -36,13 +39,11 @@ private val shape by lazy {
     RoundedCornerShape(4.dp)
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun StringSetPreferenceHandlerScreen(
     viewModel: StringSetPreferenceHandlerViewModel = hiltViewModel()
 ) {
-
-    val storedValue = viewModel.storedValueFlow.collectAsState(initial = emptySet())
-
     Column(
         modifier = Modifier
             .fillMaxHeight()
@@ -52,24 +53,25 @@ fun StringSetPreferenceHandlerScreen(
         horizontalAlignment = Alignment.Start,
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Bottom,
             modifier = Modifier.padding(bottom = 8.dp)
         ) {
+            var text by rememberSaveable { mutableStateOf("") }
             OutlinedTextField(
-                value = storedValue.value.toString(),
-                onValueChange = { viewModel.storeValue(it) },
+                value = text,
+                onValueChange = { text = it },
                 label = { Text(viewModel.label) },
                 maxLines = 1,
                 textStyle = TextStyle(color = Color.Blue, fontWeight = FontWeight.Bold),
-                modifier = Modifier.padding(end = 16.dp)
+                modifier = Modifier
+                    .padding(end = 16.dp)
+                    .width(IntrinsicSize.Min)
             )
             Button(
                 onClick = {
-                    viewModel.storeValue("test")
+                    viewModel.storeValue(text)
                 },
-                modifier = Modifier
-                    .height(MinHeight)
-                    .defaultMinSize(minWidth = MinHeight)
+                modifier = Modifier.height(MinHeight)
             ) {
                 Icon(
                     Icons.Filled.Add,
@@ -78,20 +80,74 @@ fun StringSetPreferenceHandlerScreen(
             }
         }
 
+        val storedValue = viewModel.storedValueFlow.collectAsState(emptySet())
+
         LazyColumn(
             modifier = Modifier.padding(top = 8.dp)
         ) {
-            items(storedValue.value.size) { index ->
-                Text(
-                    text = storedValue.value.map { it }[index],
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(shape)
-                        .defaultMinSize(minHeight = MinHeight)
-                        .background(Color.LightGray)
-                        .padding(16.dp),
-                    style = TextStyle(color = Color.Blue, fontStyle = FontStyle.Italic)
+            itemsIndexed(items = storedValue.value.toList(), key = { _, s -> s }
+            ) { _, item ->
+                val currentItem by rememberUpdatedState(item)
+                val dismissState = rememberDismissState(
+                    confirmStateChange = { dismissValue ->
+                        when (dismissValue) {
+                            DismissValue.DismissedToEnd,
+                            DismissValue.DismissedToStart -> {
+                                viewModel.isDelete(currentItem)
+                                true
+                            }
+                            else -> false
+                        }
+                    }
                 )
+
+                SwipeToDismiss(state = dismissState, background = {
+                    val direction = dismissState.dismissDirection ?: return@SwipeToDismiss
+                    val color by animateColorAsState(
+                        when (dismissState.targetValue) {
+                            Default -> Color.Gray
+                            DismissValue.DismissedToEnd,
+                            DismissValue.DismissedToStart -> Color.Red
+                        }
+                    )
+                    val alignment = when (direction) {
+                        DismissDirection.StartToEnd -> Alignment.CenterStart
+                        DismissDirection.EndToStart -> Alignment.CenterEnd
+                    }
+                    val icon = when (direction) {
+                        DismissDirection.StartToEnd,
+                        DismissDirection.EndToStart -> Icons.Default.Delete
+                    }
+                    val scale by animateFloatAsState(
+                        if (dismissState.targetValue == Default) 0.75f else 1f
+                    )
+
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .background(color)
+                            .padding(horizontal = 20.dp),
+                        contentAlignment = alignment
+                    ) {
+                        Icon(
+                            icon,
+                            contentDescription = "Localized description",
+                            modifier = Modifier.scale(scale)
+                        )
+                    }
+                }) {
+                    Text(
+                        text = item,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(shape)
+                            .defaultMinSize(minHeight = MinHeight)
+                            .background(Color.LightGray)
+                            .padding(16.dp),
+                        style = TextStyle(color = Color.Blue, fontStyle = FontStyle.Italic)
+                    )
+
+                }
             }
         }
     }

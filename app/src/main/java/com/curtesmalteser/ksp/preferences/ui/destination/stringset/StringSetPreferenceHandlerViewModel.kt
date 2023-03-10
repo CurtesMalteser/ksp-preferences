@@ -24,4 +24,10 @@ class StringSetPreferenceHandlerViewModel @Inject constructor(private val useCas
             useCase.storeString(value)
         }
     }
+
+    fun isDelete(s: String) {
+        viewModelScope.launch {
+            useCase.deleteString(s)
+        }
+    }
 }
