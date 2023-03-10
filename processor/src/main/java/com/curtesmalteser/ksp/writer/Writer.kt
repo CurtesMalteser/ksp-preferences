@@ -77,6 +77,10 @@ class Writer(
             .filter { declaration ->
                 declaration.type.toString() == "Flow"
             }
+            .also {
+                accumulator.storeImport("kotlinx.coroutines.flow.map")
+                accumulator.storeImport("kotlinx.coroutines.flow.Flow")
+            }
             .forEach {
 
                 val returnType = it.type
@@ -89,12 +93,7 @@ class Writer(
                    """.trimMargin()
 
                 accumulator.storeProperty(property)
-
             }
-
-        accumulator.storeImport("kotlinx.coroutines.flow.map")
-        accumulator.storeImport("kotlinx.coroutines.flow.Flow")
-
     }
 
     override fun write() {
