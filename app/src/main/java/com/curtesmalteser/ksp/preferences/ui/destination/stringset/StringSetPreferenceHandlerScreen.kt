@@ -39,7 +39,6 @@ private val shape by lazy {
     RoundedCornerShape(4.dp)
 }
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun StringSetPreferenceHandlerScreen(
     viewModel: StringSetPreferenceHandlerViewModel = hiltViewModel()
@@ -87,69 +86,77 @@ fun StringSetPreferenceHandlerScreen(
         ) {
             itemsIndexed(items = storedValue.value.toList(), key = { _, s -> s }
             ) { _, item ->
-                val currentItem by rememberUpdatedState(item)
-                val dismissState = rememberDismissState(
-                    confirmStateChange = { dismissValue ->
-                        when (dismissValue) {
-                            DismissValue.DismissedToEnd,
-                            DismissValue.DismissedToStart -> {
-                                viewModel.isDelete(currentItem)
-                                true
-                            }
-                            else -> false
-                        }
-                    }
-                )
-
-                SwipeToDismiss(state = dismissState, background = {
-                    val direction = dismissState.dismissDirection ?: return@SwipeToDismiss
-                    val color by animateColorAsState(
-                        when (dismissState.targetValue) {
-                            Default -> Color.Gray
-                            DismissValue.DismissedToEnd,
-                            DismissValue.DismissedToStart -> Color.Red
-                        }
-                    )
-                    val alignment = when (direction) {
-                        DismissDirection.StartToEnd -> Alignment.CenterStart
-                        DismissDirection.EndToStart -> Alignment.CenterEnd
-                    }
-                    val icon = when (direction) {
-                        DismissDirection.StartToEnd,
-                        DismissDirection.EndToStart -> Icons.Default.Delete
-                    }
-                    val scale by animateFloatAsState(
-                        if (dismissState.targetValue == Default) 0.75f else 1f
-                    )
-
-                    Box(
-                        Modifier
-                            .fillMaxSize()
-                            .background(color)
-                            .padding(horizontal = 20.dp),
-                        contentAlignment = alignment
-                    ) {
-                        Icon(
-                            icon,
-                            contentDescription = "Localized description",
-                            modifier = Modifier.scale(scale)
-                        )
-                    }
-                }) {
-                    Text(
-                        text = item,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(shape)
-                            .defaultMinSize(minHeight = MinHeight)
-                            .background(Color.LightGray)
-                            .padding(16.dp),
-                        style = TextStyle(color = Color.Blue, fontStyle = FontStyle.Italic)
-                    )
-
-                }
+                SwipeToDismissPreference(item) {viewModel.isDelete(it)}
             }
         }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterialApi::class)
+private fun SwipeToDismissPreference(
+    item: String,
+    deleteAction: (String) -> Unit
+) {
+    val dismissState = rememberDismissState(
+        confirmStateChange = { dismissValue ->
+            when (dismissValue) {
+                DismissValue.DismissedToEnd,
+                DismissValue.DismissedToStart -> {
+                    deleteAction(item)
+                    true
+                }
+                else -> false
+            }
+        }
+    )
+
+    SwipeToDismiss(state = dismissState, background = {
+        val direction = dismissState.dismissDirection ?: return@SwipeToDismiss
+        val color by animateColorAsState(
+            when (dismissState.targetValue) {
+                Default -> Color.Gray
+                DismissValue.DismissedToEnd,
+                DismissValue.DismissedToStart -> Color.Red
+            }
+        )
+        val alignment = when (direction) {
+            DismissDirection.StartToEnd -> Alignment.CenterStart
+            DismissDirection.EndToStart -> Alignment.CenterEnd
+        }
+        val icon = when (direction) {
+            DismissDirection.StartToEnd,
+            DismissDirection.EndToStart -> Icons.Default.Delete
+        }
+        val scale by animateFloatAsState(
+            if (dismissState.targetValue == Default) 0.75f else 1f
+        )
+
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(color)
+                .padding(horizontal = 20.dp),
+            contentAlignment = alignment
+        ) {
+            Icon(
+                icon,
+                contentDescription = "Red color dismiss box.",
+                modifier = Modifier.scale(scale)
+            )
+        }
+    }) {
+        Text(
+            text = item,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(shape)
+                .defaultMinSize(minHeight = MinHeight)
+                .background(Color.LightGray)
+                .padding(16.dp),
+            style = TextStyle(color = Color.Blue, fontStyle = FontStyle.Italic)
+        )
+
     }
 }
 

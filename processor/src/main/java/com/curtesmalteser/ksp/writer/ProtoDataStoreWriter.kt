@@ -2,11 +2,9 @@ package com.curtesmalteser.ksp.writer
 
 import com.curtesmalteser.ksp.visitor.ClassVisitor
 import com.google.devtools.ksp.containingFile
+import com.google.devtools.ksp.isAbstract
 import com.google.devtools.ksp.processing.KSPLogger
-import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSTypeReference
-import com.google.devtools.ksp.symbol.KSValueParameter
-import com.google.devtools.ksp.symbol.Modifier
+import com.google.devtools.ksp.symbol.*
 import java.io.OutputStream
 import java.io.OutputStreamWriter
 
@@ -35,17 +33,18 @@ class ProtoDataStoreWriter(
             .filter { declaration -> declaration.parameters.size == 1 }.forEach { declaration ->
                 declaration.parameters.first().let { parameter ->
 
-                    parameter.type.takeIf { it.isFunctionTypeWithBuilderArgument }?.let { typeReference ->
-                        typeReference.element!!.typeArguments.map {
-                            it.type.toString()
-                        }.single { it != "Builder" }.let {
-                            accumulator.constructorArg = it
-                            accumulateImport(it, parameter)
-                            "$it.Builder"
-                        }.also {
-                            accumulateImport(it, parameter)
-                        }
-                    } ?: parameter.type.element!!.typeArguments.first().type.also {
+                    parameter.type.takeIf { it.isFunctionTypeWithBuilderArgument }
+                        ?.let { typeReference ->
+                            typeReference.element!!.typeArguments.map {
+                                it.type.toString()
+                            }.single { it != "Builder" }.let {
+                                accumulator.constructorArg = it
+                                accumulateImport(it, parameter)
+                                "$it.Builder"
+                            }.also {
+                                accumulateImport(it, parameter)
+                            }
+                        } ?: parameter.type.element!!.typeArguments.first().type.also {
                         accumulateImport(it.toString(), parameter)
                     }
 
@@ -77,7 +76,29 @@ class ProtoDataStoreWriter(
     }
 
     override fun writeProperty() {
-        logger.warn("writeProperty not implemented")
+
+        fun getPropertyType(returnType: KSType) = returnType.toString()
+            .replace("[Error type: Unresolved type for ", "")
+            .replace("]", "")
+
+        declaration.getAllProperties()
+            .filter { declaration -> declaration.isAbstract() }
+            .filter { declaration ->
+                declaration.type.toString() == "Flow"
+            }
+            .forEach {
+
+                val returnType = it.type.resolve()
+
+                val property =
+                    "    override val $it: ${getPropertyType(returnType)} = dataStore.data"
+
+                accumulator.storeProperty(property)
+
+            }
+
+        accumulator.storeImport("kotlinx.coroutines.flow.Flow")
+
     }
 
     override fun write() {
