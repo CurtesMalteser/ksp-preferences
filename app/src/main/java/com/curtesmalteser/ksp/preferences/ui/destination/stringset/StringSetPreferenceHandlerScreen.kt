@@ -84,9 +84,10 @@ fun StringSetPreferenceHandlerScreen(
         LazyColumn(
             modifier = Modifier.padding(top = 8.dp)
         ) {
-            itemsIndexed(items = storedValue.value.toList(), key = { _, s -> s }
-            ) { _, item ->
-                SwipeToDismissPreference(item) {viewModel.isDelete(it)}
+            itemsIndexed(
+                items = storedValue.value.toList(),
+                key = { _, s -> s.hashCode() }) { _, item ->
+                SwipeToDismissPreference(item) { viewModel.isDelete(it) }
             }
         }
     }

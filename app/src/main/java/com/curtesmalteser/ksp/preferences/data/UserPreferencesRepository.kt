@@ -2,16 +2,17 @@ package com.curtesmalteser.ksp.preferences.data
 
 import com.curtesmalteser.ksp.preferences.UserPreferences
 import com.curtesmalteser.ksp.preferences.UserPreferences.SortOrder
+import com.curtesmalteser.ksp.preferences.UserPreferences.getDefaultInstance
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
 
 /**
  * Created by António Bastião on 09.10.22
  * Refer to <a href="https://github.com/CurtesMalteser">CurtesMalteser github</a>
  */
 interface UserPreferencesRepository {
-    val getShowCompleted: Flow<Boolean>
+    val userPreferencesFlow: Flow<UserPreferences>
+
     suspend fun updateShowCompleted(isShow: Boolean)
     suspend fun enableSortByDeadline(enable: Boolean)
     suspend fun enableSortByPriority(enable: Boolean)
@@ -21,14 +22,13 @@ class UserPreferencesRepositoryImpl(
     private val userPrefs: UserPreferencesData,
 ) : UserPreferencesRepository {
 
-    override val getShowCompleted: Flow<Boolean> = runCatching {
+    override val userPreferencesFlow: Flow<UserPreferences> = runCatching {
         userPrefs.userPreferencesFlow
     }.fold(
-        onSuccess = {
-            it.map(UserPreferences::getShowCompleted)
-        }, onFailure = {
+        onSuccess = { it },
+        onFailure = {
             flow {
-                emit(false)
+                emit(getDefaultInstance())
             }
         }
     )

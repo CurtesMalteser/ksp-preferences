@@ -20,8 +20,9 @@ class StringSetHandlerUseCaseImpl @Inject constructor(private val repository: Ma
 
     private var state: Set<String> = emptySet()
 
-    override val setOfStringFlow: Flow<Set<String>> get() = repository.myStringSetFlow
-        .onEach { state = it }
+    override val setOfStringFlow: Flow<Set<String>>
+        get() = repository.myStringSetFlow
+            .onEach { state = it }
 
     override suspend fun storeString(value: String) {
         repository.testStringSet(state.toMutableSet().apply { add(value) })
