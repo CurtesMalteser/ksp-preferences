@@ -10,7 +10,6 @@ interface MainRepository : AppData
 
 class MainRepositoryImpl(
     private val prefs: AppData,
-    private val userPrefs: UserPreferencesData,
 ) : MainRepository {
 
     override val myBooleanFlow: Flow<Boolean>

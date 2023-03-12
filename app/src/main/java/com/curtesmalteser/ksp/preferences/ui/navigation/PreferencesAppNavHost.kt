@@ -11,6 +11,7 @@ import androidx.navigation.compose.rememberNavController
 import com.curtesmalteser.ksp.preferences.ui.destination.bolean.BooleanPreferenceHandlerScreen
 import com.curtesmalteser.ksp.preferences.ui.destination.reusable.*
 import com.curtesmalteser.ksp.preferences.ui.destination.stringset.StringSetPreferenceHandlerScreen
+import com.curtesmalteser.ksp.preferences.ui.destination.user.UserPreferenceHandlerScreen
 import com.curtesmalteser.ksp.preferences.ui.host.PreferencesScreen
 import com.curtesmalteser.ksp.preferences.ui.theme.KsPreferencesTheme
 
@@ -56,9 +57,8 @@ fun PreferencesAppNavHost(
         composable(route = PreferenceScreen.SetString.toString()) {
             StringSetPreferenceHandlerScreen()
         }
-        // FIXME: add specialized screen
         composable(route = PreferenceScreen.UserPreferences.toString()) {
-            BooleanPreferenceHandlerScreen()
+            UserPreferenceHandlerScreen()
         }
     }
 }

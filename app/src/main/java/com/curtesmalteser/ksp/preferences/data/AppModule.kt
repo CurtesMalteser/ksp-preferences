@@ -25,11 +25,17 @@ class AppModule {
     fun appData(prefs: DataStore<Preferences>): AppData = AppDataImpl(prefs)
 
     @Provides
-    fun userPreferences(@ApplicationContext context: Context) : DataStore<UserPreferences> = context.userPrefsDataStore
+    fun userPreferences(@ApplicationContext context: Context): DataStore<UserPreferences> =
+        context.userPrefsDataStore
 
     @Provides
-    fun userData(userPrefs: DataStore<UserPreferences>): UserPreferencesData = UserPreferencesDataImpl(userPrefs)
+    fun userData(userPrefs: DataStore<UserPreferences>): UserPreferencesData =
+        UserPreferencesDataImpl(userPrefs)
 
     @Provides
-    fun repo(prefs: AppData, userPrefs: UserPreferencesData): MainRepository = MainRepositoryImpl(prefs, userPrefs)
+    fun mainRepository(prefs: AppData): MainRepository = MainRepositoryImpl(prefs)
+
+    @Provides
+    fun userPreferencesRepository(userPrefs: UserPreferencesData): UserPreferencesRepository =
+        UserPreferencesRepositoryImpl(userPrefs)
 }
