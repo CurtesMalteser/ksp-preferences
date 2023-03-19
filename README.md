@@ -2,7 +2,7 @@
 
 ## Welcome...
 
-###### Setup
+### Setup
 
 Add JitPack
 
@@ -34,7 +34,29 @@ dependencies {
 }
 ```
 
-###### License
+### How to use with Preferences DataStore
+
+1. Declare your interface and annotate `@WithPreferences`
+2. Declare a suspend function which takes as parameter one of the Preferences DataStore supported
+   types
+3. Add a property with same name as the parameter declared in the previous point with suffix Flow
+    - Flow generic type must match the type of the parameter declared previously
+4. Compile project (code is generated)
+
+```
+@WithPreferences
+interface AppData {
+    val myBooleanFlow: Flow<Boolean>
+    val myIntFlow: Flow<Int>
+    // ...
+
+    suspend fun testBoolean(myBoolean: Boolean)
+    suspend fun testInt(myInt: Int)
+    // ...
+}
+```
+
+### License
 
 ```
 Licensed under the Apache License, Version 2.0 (the "License");
