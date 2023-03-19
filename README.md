@@ -37,11 +37,13 @@ dependencies {
 ### How to use with Preferences DataStore
 
 1. Declare your interface and annotate `@WithPreferences`
-2. Declare a suspend function which takes as parameter one of the Preferences DataStore supported
+2. Declare a suspend function which takes as single parameter, one of the supported Preferences
+   DataStore
    types
 3. Add a property with same name as the parameter declared in the previous point with suffix Flow
     - Flow generic type must match the type of the parameter declared previously
 4. Compile project (code is generated)
+5. Keys are inferred from the parameter and property type, so this must match
 
 ```
 @WithPreferences
@@ -53,6 +55,26 @@ interface AppData {
     suspend fun testBoolean(myBoolean: Boolean)
     suspend fun testInt(myInt: Int)
     // ...
+}
+```
+
+### How to use with Proto DataStore
+
+1. Define your proto file and respective Serializer as usual
+2. Declare your interface and annotate `@WithPreferences`
+3. Declare a single function which takes the proto object or the builder as param
+    - Supported:
+        - Named param: (prefs: (UserPreferences) -> UserPreferences)
+        - With `this`: (prefs: (UserPreferences.Builder) -> UserPreferences)
+4. Declare property with Flow to collect proto object
+5. Compile project (code is generated)
+
+```
+@WithProto
+interface UserPreferencesData {
+
+    val userPreferencesFlow: Flow<UserPreferences>
+    suspend fun updateUserPrefsBuilderThis(prefs: UserPreferences.Builder.() -> UserPreferences)
 }
 ```
 
