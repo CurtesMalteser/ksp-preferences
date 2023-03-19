@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
     id 'org.jetbrains.kotlin.jvm'
-    id 'com.google.protobuf' version '0.9.1'
+    id 'maven-publish'
 }
 
 java {
@@ -12,6 +12,16 @@ java {
 dependencies {
     implementation 'com.google.devtools.ksp:symbol-processing-api:1.7.10-1.0.6'
     implementation project(':annotation')
+}
 
-    implementation 'com.google.protobuf:protobuf-lite:3.0.1'
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'com.curtesmalteser.kspreferences'
+            artifactId = 'processor'
+            version = '0.0.1'
+
+            from components.java
+        }
+    }
 }
