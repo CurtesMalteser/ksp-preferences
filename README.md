@@ -24,6 +24,17 @@ plugins {
 }
 ```
 
+Add generated files to classpath
+
+```
+android {
+    // ...
+    sourceSets.configureEach {
+        kotlin.srcDir("$buildDir/generated/ksp/$name/kotlin/")
+    }
+}
+```
+
 Add Gradle dependencies
 
 ```
@@ -34,6 +45,14 @@ dependencies {
 }
 ```
 
+If you are using Dagger/Hilt
+
+```
+kapt {
+    correctErrorTypes = true
+}
+```
+
 ### How to use with Preferences DataStore
 
 1. Declare your interface and annotate `@WithPreferences`
@@ -41,7 +60,7 @@ dependencies {
    DataStore
    types
 3. Add a property with same name as the parameter declared in the previous point with suffix Flow
-    - Flow generic type must match the type of the parameter declared previously
+   - Flow generic type must match the type of the parameter declared previously
 4. Compile project (code is generated)
 5. Keys are inferred from the parameter and property type, so this must match
 
