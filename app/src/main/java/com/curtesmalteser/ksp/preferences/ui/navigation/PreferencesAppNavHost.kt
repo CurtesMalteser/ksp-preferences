@@ -26,38 +26,38 @@ fun PreferencesAppNavHost(
 ) {
     NavHost(
         navController = navController,
-        startDestination = PreferenceScreen.PreferencesApp.toString(),
+        startDestination = PreferenceScreen.PreferencesApp.name,
         modifier = modifier,
     ) {
-        composable(route = PreferenceScreen.PreferencesApp.toString()) {
+        composable(route = PreferenceScreen.PreferencesApp.name) {
             PreferencesScreen(navController = navController)
         }
-        composable(route = PreferenceScreen.Boolean.toString()) {
+        composable(route = PreferenceScreen.Boolean.name) {
             BooleanPreferenceHandlerScreen()
         }
-        composable(route = PreferenceScreen.Int.toString()) {
-            val viewModel : IntPreferenceHandlerViewModel = hiltViewModel()
+        composable(route = PreferenceScreen.Int.name) {
+            val viewModel: IntPreferenceHandlerViewModel = hiltViewModel()
             ReusablePreferenceHandlerScreen(viewModel)
         }
-        composable(route = PreferenceScreen.Long.toString()) {
-            val viewModel : LongPreferenceHandlerViewModel = hiltViewModel()
-            ReusablePreferenceHandlerScreen(viewModel)
-
-        }
-        composable(route = PreferenceScreen.Float.toString()) {
-            val viewModel : FloatPreferenceHandlerViewModel = hiltViewModel()
+        composable(route = PreferenceScreen.Long.name) {
+            val viewModel: LongPreferenceHandlerViewModel = hiltViewModel()
             ReusablePreferenceHandlerScreen(viewModel)
 
         }
-        composable(route = PreferenceScreen.String.toString()) {
-            val viewModel : StringPreferenceHandlerViewModel = hiltViewModel()
+        composable(route = PreferenceScreen.Float.name) {
+            val viewModel: FloatPreferenceHandlerViewModel = hiltViewModel()
             ReusablePreferenceHandlerScreen(viewModel)
 
         }
-        composable(route = PreferenceScreen.SetString.toString()) {
+        composable(route = PreferenceScreen.String.name) {
+            val viewModel: StringPreferenceHandlerViewModel = hiltViewModel()
+            ReusablePreferenceHandlerScreen(viewModel)
+
+        }
+        composable(route = PreferenceScreen.SetString.name) {
             StringSetPreferenceHandlerScreen()
         }
-        composable(route = PreferenceScreen.UserPreferences.toString()) {
+        composable(route = PreferenceScreen.UserPreferences.name) {
             UserPreferenceHandlerScreen()
         }
     }
