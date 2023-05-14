@@ -3,9 +3,13 @@ package com.curtesmalteser.ksp.processor
 import com.curtesmalteser.ksp.annotation.WithPreferences
 import com.curtesmalteser.ksp.annotation.WithProto
 import com.curtesmalteser.ksp.writer.Accumulator
+import com.curtesmalteser.ksp.writer.PreferencesWriter
 import com.curtesmalteser.ksp.writer.ProtoDataStoreWriter
-import com.curtesmalteser.ksp.writer.Writer
-import com.google.devtools.ksp.processing.*
+import com.google.devtools.ksp.processing.CodeGenerator
+import com.google.devtools.ksp.processing.Dependencies
+import com.google.devtools.ksp.processing.KSPLogger
+import com.google.devtools.ksp.processing.Resolver
+import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 
@@ -53,9 +57,10 @@ class PreferencesProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogg
                 Dependencies(false, declaration.containingFile!!), packageName, className, "kt"
             ).use { output ->
                 when {
-                    T::class == WithPreferences::class -> Writer(
+                    T::class == WithPreferences::class -> PreferencesWriter(
                         output, declaration, logger, Accumulator()
                     ).write()
+
                     T::class == WithProto::class -> ProtoDataStoreWriter(
                         output, declaration, logger, Accumulator()
                     ).write()

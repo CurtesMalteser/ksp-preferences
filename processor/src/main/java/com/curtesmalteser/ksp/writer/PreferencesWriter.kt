@@ -15,7 +15,7 @@ import java.io.OutputStreamWriter
  * Created by António Bastião on 29.07.22
  * Refer to <a href="https://github.com/CurtesMalteser">CurtesMalteser github</a>
  */
-class Writer(
+class PreferencesWriter(
     output: OutputStream,
     private val declaration: KSClassDeclaration,
     private val logger: KSPLogger,
