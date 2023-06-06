@@ -1,8 +1,17 @@
 package com.curtesmalteser.ksp.writer
 
+import com.curtesmalteser.ksp.annotation.WithDefaultBoolean
+import com.curtesmalteser.ksp.annotation.WithDefaultFloat
+import com.curtesmalteser.ksp.annotation.WithDefaultInt
+import com.curtesmalteser.ksp.annotation.WithDefaultLong
+import com.curtesmalteser.ksp.annotation.WithDefaultString
+import com.curtesmalteser.ksp.annotation.WithDefaultStringSet
 import com.curtesmalteser.ksp.visitor.ClassVisitor
+import com.google.devtools.ksp.KspExperimental
+import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.innerArguments
 import com.google.devtools.ksp.isAbstract
+import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
@@ -34,20 +43,15 @@ class PreferencesWriter(
         declaration.getAllFunctions()
             .filter { declaration -> declaration.modifiers.contains(Modifier.SUSPEND) }
             .filter { declaration -> declaration.isAbstract }
-            .filter { declaration -> declaration.parameters.size == 1 }
-            .forEach {
+            .filter { declaration -> declaration.parameters.size == 1 }.forEach {
                 it.parameters.first().let { parameter ->
 
                     parameter.generateKey()
 
                     val paramType = if (parameter.type.toString() == "Set") {
 
-                        val genericType = parameter.type
-                            .resolve()
-                            .innerArguments
-                            .first()
-                            .type
-                            .toString()
+                        val genericType = parameter.type.resolve()
+                            .innerArguments.first().type.toString()
 
                         if (genericType == "String") {
                             "Set<String>"
@@ -72,23 +76,21 @@ class PreferencesWriter(
 
     override fun writeProperty() {
 
-        declaration.getAllProperties()
-            .filter { declaration -> declaration.isAbstract() }
+        declaration.getAllProperties().filter { declaration -> declaration.isAbstract() }
             .filter { declaration ->
                 declaration.type.toString() == "Flow"
-            }
-            .also {
+            }.also {
                 accumulator.storeImport("kotlinx.coroutines.flow.map")
                 accumulator.storeImport("kotlinx.coroutines.flow.Flow")
-            }
-            .forEach {
+            }.forEach {
 
-                val returnType = it.type
-                    .resolve().toString()
+                val returnType = it.type.resolve().toString()
 
-               val property =  """    override val $it: $returnType = dataStore.data
+                val property = """    override val $it: $returnType = dataStore.data
                    |    .map { preferences ->
-                   |        preferences[${it.toString().replace("Flow", "Key")}] ?: ${it.getDefaultValues()}
+                   |        preferences[${
+                    it.toString().replace("Flow", "Key")
+                }] ?: ${it.getDefaultValues()}
                    |    }
                    """.trimMargin()
 
@@ -155,16 +157,53 @@ class PreferencesWriter(
         }
     }
 
-    private fun KSPropertyDeclaration.getDefaultValues() : String{
-       return when (type.resolve().toString()) {
-            "Flow<Boolean>" -> "false"
-            "Flow<Int>" -> "0"
-            "Flow<Long>" -> "0L"
-            "Flow<Float>" -> "0F"
-            "Flow<String>" -> "\"\""
-            "Flow<Set<String>>" -> "emptySet()"
-           else -> throw UnsupportedOperationException("Type not supported: $type")
-       }
-    }
+    private fun KSPropertyDeclaration.getDefaultValues(): String =
+        when (type.resolve().toString()) {
+            "Flow<Boolean>" -> getDefaultBoolean().toString()
+            "Flow<Int>" -> getDefaultInt().toString()
+            "Flow<Long>" -> "${getDefaultLong()}L"
+            "Flow<Float>" -> "${getDefaultFloat()}F"
+            "Flow<String>" -> getDefaultString()
+            "Flow<Set<String>>" -> getDefaultStringSet()
+            else -> throw UnsupportedOperationException("Type not supported: $type")
+        }
 
+    @OptIn(KspExperimental::class)
+    private fun KSPropertyDeclaration.getDefaultBoolean(): Boolean = takeIf {
+        it.isAnnotationPresent(WithDefaultBoolean::class)
+    }?.getAnnotationsByType(WithDefaultBoolean::class)?.first()?.value ?: false
+
+    @OptIn(KspExperimental::class)
+    private fun KSPropertyDeclaration.getDefaultInt(): Int = takeIf {
+        it.isAnnotationPresent(WithDefaultInt::class)
+    }?.getAnnotationsByType(WithDefaultInt::class)?.first()?.value ?: 0
+
+    @OptIn(KspExperimental::class)
+    private fun KSPropertyDeclaration.getDefaultLong(): Long = takeIf {
+        it.isAnnotationPresent(WithDefaultLong::class)
+    }?.getAnnotationsByType(WithDefaultLong::class)?.first()?.value ?: 0L
+
+    @OptIn(KspExperimental::class)
+    private fun KSPropertyDeclaration.getDefaultFloat(): Float = takeIf {
+        it.isAnnotationPresent(WithDefaultFloat::class)
+    }?.getAnnotationsByType(WithDefaultFloat::class)?.first()?.value ?: 0F
+
+    @OptIn(KspExperimental::class)
+    private fun KSPropertyDeclaration.getDefaultString(): String = takeIf {
+        it.isAnnotationPresent(WithDefaultString::class)
+    }?.getAnnotationsByType(WithDefaultString::class)?.first()?.value ?: "\"\""
+
+    @OptIn(KspExperimental::class)
+    private fun KSPropertyDeclaration.getDefaultStringSet(): String = takeIf {
+        it.isAnnotationPresent(WithDefaultStringSet::class)
+    }?.getAnnotationsByType(WithDefaultStringSet::class)
+        ?.first()?.value
+        ?.toSet()
+        ?.joinToString(
+            separator = ",\n",
+            prefix = "\n",
+            postfix = "\n"
+        ) { "                \"$it\"" }
+        ?.let { "setOf($it            )" }
+        ?: "emptySet()"
 }
