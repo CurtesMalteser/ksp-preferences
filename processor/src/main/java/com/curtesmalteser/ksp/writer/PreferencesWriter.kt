@@ -191,7 +191,9 @@ class PreferencesWriter(
     @OptIn(KspExperimental::class)
     private fun KSPropertyDeclaration.getDefaultString(): String = takeIf {
         it.isAnnotationPresent(WithDefaultString::class)
-    }?.getAnnotationsByType(WithDefaultString::class)?.first()?.value ?: "\"\""
+    }?.getAnnotationsByType(WithDefaultString::class)?.first()
+        ?.value
+        ?.let { "\"$it\"" } ?: "\"\""
 
     @OptIn(KspExperimental::class)
     private fun KSPropertyDeclaration.getDefaultStringSet(): String = takeIf {
