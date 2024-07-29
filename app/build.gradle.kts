@@ -13,12 +13,12 @@ android {
 
     namespace = "com.curtesmalteser.ksp.preferences"
 
-    compileSdkVersion(33)
+    compileSdk = 33
 
     defaultConfig {
         applicationId = "com.curtesmalteser.ksp.preferences"
-        minSdkVersion(29)
-        targetSdkVersion(33)
+        minSdk = 29
+        targetSdk = 33
         versionCode = 1
         versionName = "1.0"
 
@@ -74,33 +74,32 @@ kapt {
 
 dependencies {
 
-    implementation ("androidx.core:core-ktx:1.10.0")
-    implementation ("androidx.compose.ui:ui:1.4.3")
-    implementation ("androidx.compose.material:material:1.4.3")
-    implementation ("androidx.compose.ui:ui-tooling-preview:1.4.3")
-    implementation ("androidx.lifecycle:lifecycle-runtime-ktx:${"2.6.1"/*libs.versions.lifecycle*/}")
-    implementation ("androidx.activity:activity-compose:1.7.1")
-    implementation ("androidx.hilt:hilt-navigation-compose:1.1.0-alpha01")
+    implementation(libs.core)
+    implementation(libs.compose.ui)
+    implementation(libs.compose.material)
+    implementation(libs.compose.preview)
+    implementation(libs.lifecycle.runtime)
+    implementation(libs.activity.compose)
+    implementation(libs.hilt.navigation.compose)
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.4.3")
-    debugImplementation("androidx.compose.ui:ui-tooling:1.4.3")
+    debugImplementation(libs.compose.ui.tooling)
 
-    implementation("androidx.navigation:navigation-compose:2.5.3")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:${"2.6.1"}/*lifecycle_version*/")
+    implementation(libs.navigation.compose)
+    implementation(libs.lifecycle.viewmodel.ktx)
 
-    implementation("androidx.datastore:datastore-preferences:1.0.0")
-    implementation("androidx.datastore:datastore:1.0.0")
+    implementation(libs.datastore.preferences)
+    implementation(libs.datastore)
 
     implementation(project(":annotation"))
     ksp(project(":processor"))
 
-    implementation("com.google.dagger:hilt-android:2.46.1")
-    kapt("com.google.dagger:hilt-compiler:2.46.1")
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler)
 
-    // protobuf
-    implementation("com.google.protobuf:protobuf-lite:3.0.1")
+    implementation(libs.protobuf.lite)
 }
 
 protobuf {
@@ -114,9 +113,6 @@ protobuf {
     }
     generateProtoTasks {
         all().forEach { task ->
-            /*task.builtins {
-                remove java
-            }*/
             task.plugins {
                 id("javalite") {}
             }
