@@ -4,7 +4,6 @@ android = "8.0.2"
 core = "1.10.0"
 compose = "1.4.3"
 activity-compose = "1.7.1"
-kotlin-gradle-plugin = "1.8.10"
 lifecycle = "2.6.1"
 hilt-navigation-compose = "1.1.0-alpha01"
 navigation-compose = "2.5.3"
@@ -21,7 +20,7 @@ compose-ui = { module = "androidx.compose.ui:ui", version.ref = "compose" }
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "compose" }
 compose-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "compose" }
 compose-material = { module = "androidx.compose.material:material", version.ref = "compose" }
-kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin-gradle-plugin" }
+kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 lifecycle-runtime = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle" }
 activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activity-compose" }
 hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hilt-navigation-compose" }
@@ -32,6 +31,7 @@ datastore = { module = "androidx.datastore:datastore", version.ref = "datastore"
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref ="hilt" }
 hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref ="hilt" }
 protobuf-lite = { module = "com.google.protobuf:protobuf-lite", version.ref = "protobuf" }
+symbol-processing-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "android" }
