@@ -1,6 +1,6 @@
 buildscript {
     dependencies {
-        classpath libs.kotlin.gradle.plugin
+        classpath(libs.kotlin.gradle.plugin)
     }
 }
 
@@ -11,6 +11,6 @@ plugins {
     alias(libs.plugins.hilt.plugin) apply false
 }
 
-tasks.register("clean", Delete) {
-    delete rootProject.buildDir
+tasks.register("clean", Delete::class) {
+    delete(rootProject.buildDir)
 }
