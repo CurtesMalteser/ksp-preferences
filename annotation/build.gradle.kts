@@ -12,12 +12,12 @@ java {
 
 publishing {
     publications {
-        maven(MavenPublication) {
+        create<MavenPublication>("maven") {
             groupId = "com.curtesmalteser.kspreferences"
             artifactId = "annotation"
             version = "0.0.1"
 
-            from components.java
+            from(components["java"])
         }
     }
 }
