@@ -16,12 +16,12 @@ dependencies {
 
 publishing {
     publications {
-        maven(MavenPublication) {
+        create<MavenPublication>("maven") {
             groupId = "com.curtesmalteser.kspreferences"
             artifactId = "processor"
             version = "0.0.1"
 
-            from components.java
+            from(components["java"])
         }
     }
 }
