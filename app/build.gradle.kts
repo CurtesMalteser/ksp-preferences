@@ -1,12 +1,12 @@
 import com.google.protobuf.gradle.id
 
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("com.google.devtools.ksp") version "1.8.10-1.0.9"
-    id("kotlin-kapt")
-    id("com.google.dagger.hilt.android")
-    id("com.google.protobuf") version "0.9.4"
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    kotlin("kapt") // Remove and migrate to KSP since Hilt is supported on Kotlin 1.9.10+
+    alias(libs.plugins.devtools.ksp)
+    alias(libs.plugins.hilt.plugin)
+    alias(libs.plugins.google.protobuf)
 }
 
 android {
