@@ -3,9 +3,14 @@ package com.curtesmalteser.ksp.preferences.ui.host
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.*
+import androidx.compose.material.Button
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.Scaffold
+import androidx.compose.material.Text
+import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -63,7 +68,7 @@ fun PreferencesAppBar(
             if (canNavigateBack) {
                 IconButton(onClick = navigateUp) {
                     Icon(
-                        imageVector = Icons.Filled.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back button"
                     )
                 }
@@ -81,7 +86,7 @@ fun PreferencesScreen(
 
     val buttonsTextList = viewModel.buttonsTextList
 
-    LazyColumn {
+    LazyColumn(modifier = modifier) {
         items(buttonsTextList.size) { index ->
             Button(
                 onClick = { navController.navigate(buttonsTextList[index].name) },
