@@ -1,8 +1,10 @@
 [versions]
-kotlin = "1.8.10"
+kotlin = "1.9.24"
+ksp = "1.9.24-1.0.20"
 android = "8.5.1"
 core = "1.10.0"
-compose = "1.4.3"
+compose = "1.6.8"
+compose-compiler = "1.5.14"
 activity-compose = "1.7.1"
 lifecycle = "2.6.1"
 hilt-navigation-compose = "1.1.0-alpha01"
@@ -11,7 +13,6 @@ datastore = "1.0.0"
 hilt = "2.49"
 hilt-plugin = "2.46.1"
 protobuf = "3.0.1"
-ksp = "1.8.10-1.0.9"
 protobuf-plugin = "0.9.4"
 
 [libraries]
