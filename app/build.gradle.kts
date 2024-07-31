@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.devtools.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.google.protobuf)
+    alias(libs.plugins.compose.compiler)
 }
 
 android {
