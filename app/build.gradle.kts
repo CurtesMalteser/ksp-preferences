@@ -41,7 +41,7 @@ android {
     }
 
     sourceSets.configureEach {
-        kotlin.srcDir("$buildDir/generated/ksp/$name/kotlin/")
+        kotlin.srcDir("${layout.buildDirectory}/generated/ksp/$name/kotlin/")
     }
 
     compileOptions {
@@ -58,10 +58,10 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.4.3" //"${libs.versions.compose}"
+        kotlinCompilerExtensionVersion = libs.versions.compose.get()
     }
 
-    packagingOptions {
+    packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
