@@ -1,11 +1,12 @@
 import com.google.protobuf.gradle.id
+import org.gradle.configurationcache.extensions.capitalized
+import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompileTool
 
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    kotlin("kapt") // Remove and migrate to KSP since Hilt is supported on Kotlin 1.9.10+
     alias(libs.plugins.devtools.ksp)
-    alias(libs.plugins.hilt.plugin)
+    alias(libs.plugins.hilt)
     alias(libs.plugins.google.protobuf)
 }
 
@@ -66,10 +67,25 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-}
 
-kapt {
-    correctErrorTypes = true
+    // Fix for KSP
+    // Non explicit type specification on @Provides causes error.NonExistentClass
+    // https://github.com/google/dagger/issues/4051#issuecomment-1969345762
+    // Alternative solution:
+    // https://github.com/google/dagger/issues/4051#issuecomment-2260754486
+    androidComponents {
+        onVariants(selector().all()) { variant ->
+            afterEvaluate {
+                project.tasks.getByName("ksp" + variant.name.capitalized() + "Kotlin") {
+                    val buildConfigTask =
+                        project.tasks.getByName("generate${variant.name.capitalized()}Proto")
+                                as com.google.protobuf.gradle.GenerateProtoTask
+                    dependsOn(buildConfigTask)
+                    (this as AbstractKotlinCompileTool<*>).setSource(buildConfigTask.outputBaseDir)
+                }
+            }
+        }
+    }
 }
 
 dependencies {
@@ -97,7 +113,7 @@ dependencies {
     ksp(project(":processor"))
 
     implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
+    ksp(libs.hilt.compiler)
 
     implementation(libs.protobuf.lite)
 }
