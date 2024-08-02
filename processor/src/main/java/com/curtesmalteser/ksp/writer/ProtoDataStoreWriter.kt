@@ -19,7 +19,7 @@ import java.io.OutputStreamWriter
 class ProtoDataStoreWriter(
     output: OutputStream,
     private val declaration: KSClassDeclaration,
-    private val logger: KSPLogger,
+    logger: KSPLogger,
 ) : IWriter {
 
     private val outputStreamWriter: OutputStreamWriter = OutputStreamWriter(output)
@@ -27,6 +27,12 @@ class ProtoDataStoreWriter(
 
     init {
         logger.info("ProtoDataStoreWriter: init processing")
+
+        declaration.containingFile?.accept(ClassVisitor(logger), Unit)
+
+        writeProperty()
+        writeFunction()
+
     }
 
     override fun writeFunction() {
@@ -104,9 +110,6 @@ class ProtoDataStoreWriter(
     }
 
     override fun write() {
-        val visitor = ClassVisitor(logger, this)
-
-        declaration.containingFile?.accept(visitor, outputStreamWriter)
 
         outputStreamWriter.write("package ${declaration.packageName.asString()}")
         outputStreamWriter.appendLine().appendLine()

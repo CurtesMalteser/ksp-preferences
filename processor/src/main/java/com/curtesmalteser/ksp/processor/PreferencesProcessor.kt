@@ -43,7 +43,6 @@ class PreferencesProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogg
     private inline fun <reified T : Annotation> generateClassesForAnnotation(
         name: String, resolver: Resolver
     ) {
-        logger.warn(name)
 
         val allFiles =
             resolver.getSymbolsWithAnnotation(name).filterIsInstance<KSClassDeclaration>()

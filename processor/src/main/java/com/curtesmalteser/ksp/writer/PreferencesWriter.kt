@@ -27,18 +27,22 @@ import java.io.OutputStreamWriter
 class PreferencesWriter(
     output: OutputStream,
     private val declaration: KSClassDeclaration,
-    private val logger: KSPLogger,
+    logger: KSPLogger,
 ) : IWriter {
 
     private val outputStreamWriter: OutputStreamWriter = OutputStreamWriter(output)
     private val accumulator: IAccumulator = Accumulator()
 
     init {
-        logger.warn("Preferences Writer init processing")
+        logger.info("Preferences Writer init processing")
+
+        declaration.containingFile?.accept(ClassVisitor(logger), Unit)
+
+        writeProperty()
+        writeFunction()
     }
 
     override fun writeFunction() {
-
         declaration.getAllFunctions()
             .filter { declaration -> declaration.modifiers.contains(Modifier.SUSPEND) }
             .filter { declaration -> declaration.isAbstract }
@@ -98,10 +102,6 @@ class PreferencesWriter(
     }
 
     override fun write() {
-
-        val visitor = ClassVisitor(logger, this)
-
-        declaration.containingFile?.accept(visitor, outputStreamWriter)
 
         accumulator.storeImport("androidx.datastore.preferences.core.edit")
 
