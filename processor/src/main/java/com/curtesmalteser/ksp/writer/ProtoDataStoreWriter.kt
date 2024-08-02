@@ -5,6 +5,8 @@ import com.google.devtools.ksp.containingFile
 import com.google.devtools.ksp.isAbstract
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSFunctionDeclaration
+import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.KSTypeReference
 import com.google.devtools.ksp.symbol.KSValueParameter
@@ -28,14 +30,11 @@ class ProtoDataStoreWriter(
     init {
         logger.info("ProtoDataStoreWriter: init processing")
 
-        declaration.containingFile?.accept(ClassVisitor(logger), Unit)
-
-        writeProperty()
-        writeFunction()
+        declaration.containingFile?.accept(ClassVisitor(logger), this)
 
     }
 
-    override fun writeFunction() {
+    override fun writeFunction(function: KSFunctionDeclaration) {
         declaration.getAllFunctions()
             .filter { declaration -> declaration.modifiers.contains(Modifier.SUSPEND) }
             .filter { declaration -> declaration.isAbstract }
@@ -84,7 +83,7 @@ class ProtoDataStoreWriter(
         accumulator.storeImport(argImport)
     }
 
-    override fun writeProperty() {
+    override fun writeProperty(property: KSPropertyDeclaration) {
 
         fun getPropertyType(returnType: KSType) = returnType.toString()
             .replace("[Error type: Unresolved type for ", "")
@@ -102,10 +101,10 @@ class ProtoDataStoreWriter(
 
                 val returnType = it.type.resolve()
 
-                val property =
+                val declaredProperty =
                     "    override val $it: ${getPropertyType(returnType)} = dataStore.data"
 
-                accumulator.storeProperty(property)
+                accumulator.storeProperty(declaredProperty)
             }
     }
 

@@ -2,6 +2,7 @@ package com.curtesmalteser.ksp.visitor
 
 import com.curtesmalteser.ksp.annotation.WithPreferences
 import com.curtesmalteser.ksp.annotation.WithProto
+import com.curtesmalteser.ksp.writer.IWriter
 import com.google.devtools.ksp.getDeclaredFunctions
 import com.google.devtools.ksp.getDeclaredProperties
 import com.google.devtools.ksp.processing.KSPLogger
@@ -10,22 +11,22 @@ import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFile
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
+import com.google.devtools.ksp.symbol.KSNode
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
-import com.google.devtools.ksp.symbol.KSVisitorVoid
+import com.google.devtools.ksp.visitor.KSTopDownVisitor
 
 /**
  * Created by António Bastião on 04.02.23
  * Refer to <a href="https://github.com/CurtesMalteser">CurtesMalteser github</a>
  */
-class ClassVisitor(private val logger: KSPLogger) :
-    KSVisitorVoid() {
+class ClassVisitor(private val logger: KSPLogger) : KSTopDownVisitor<IWriter, Unit>() {
 
-    override fun visitFile(file: KSFile, data: Unit) {
+    override fun visitFile(file: KSFile, data: IWriter) {
         logger.info("Visiting file: ${file.fileName}")
-        file.declarations.forEach { it.accept(this, Unit) }
+        file.declarations.forEach { it.accept(this, data) }
     }
 
-    override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: Unit) {
+    override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: IWriter) {
 
         val className = classDeclaration.simpleName.getShortName()
 
@@ -40,17 +41,21 @@ class ClassVisitor(private val logger: KSPLogger) :
                 }
             }
 
-        classDeclaration.getDeclaredFunctions().forEach { it.accept(this, Unit) }
-        classDeclaration.getDeclaredProperties().forEach { it.accept(this, Unit) }
+        classDeclaration.getDeclaredFunctions().forEach { it.accept(this, data) }
+        classDeclaration.getDeclaredProperties().forEach { it.accept(this, data) }
     }
 
-    override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: Unit) {
+    override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: IWriter) {
         logger.info("Visiting function declaration: ${function.simpleName.getShortName()}")
+        data.writeFunction(function)
     }
 
-    override fun visitPropertyDeclaration(property: KSPropertyDeclaration, data: Unit) {
+    override fun visitPropertyDeclaration(property: KSPropertyDeclaration, data: IWriter) {
         logger.info("Visiting property declaration: ${property.simpleName.getShortName()}")
+        data.writeProperty(property)
     }
+
+    override fun defaultHandler(node: KSNode, data: IWriter) = Unit
 
     private fun getDeclarationToAnnotationName(declaration: KSClassDeclaration): Pair<KSClassDeclaration, String>? =
         run {

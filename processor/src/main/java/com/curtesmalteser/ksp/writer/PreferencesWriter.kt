@@ -14,6 +14,7 @@ import com.google.devtools.ksp.isAbstract
 import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSValueParameter
 import com.google.devtools.ksp.symbol.Modifier
@@ -36,13 +37,10 @@ class PreferencesWriter(
     init {
         logger.info("Preferences Writer init processing")
 
-        declaration.containingFile?.accept(ClassVisitor(logger), Unit)
-
-        writeProperty()
-        writeFunction()
+        declaration.containingFile?.accept(ClassVisitor(logger), this)
     }
 
-    override fun writeFunction() {
+    override fun writeFunction(function: KSFunctionDeclaration) {
         declaration.getAllFunctions()
             .filter { declaration -> declaration.modifiers.contains(Modifier.SUSPEND) }
             .filter { declaration -> declaration.isAbstract }
@@ -77,7 +75,7 @@ class PreferencesWriter(
 
     }
 
-    override fun writeProperty() {
+    override fun writeProperty(property: KSPropertyDeclaration) {
 
         declaration.getAllProperties().filter { declaration -> declaration.isAbstract() }
             .filter { declaration ->
@@ -89,7 +87,7 @@ class PreferencesWriter(
 
                 val returnType = it.type.resolve().toString()
 
-                val property = """    override val $it: $returnType = dataStore.data
+                val declaredProperty = """    override val $it: $returnType = dataStore.data
                    |    .map { preferences ->
                    |        preferences[${
                     it.toString().replace("Flow", "Key")
@@ -97,7 +95,7 @@ class PreferencesWriter(
                    |    }
                    """.trimMargin()
 
-                accumulator.storeProperty(property)
+                accumulator.storeProperty(declaredProperty)
             }
     }
 
