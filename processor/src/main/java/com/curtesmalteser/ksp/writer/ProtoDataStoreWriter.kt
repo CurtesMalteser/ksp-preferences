@@ -4,7 +4,13 @@ import com.curtesmalteser.ksp.visitor.ClassVisitor
 import com.google.devtools.ksp.containingFile
 import com.google.devtools.ksp.isAbstract
 import com.google.devtools.ksp.processing.KSPLogger
-import com.google.devtools.ksp.symbol.*
+import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSFunctionDeclaration
+import com.google.devtools.ksp.symbol.KSPropertyDeclaration
+import com.google.devtools.ksp.symbol.KSType
+import com.google.devtools.ksp.symbol.KSTypeReference
+import com.google.devtools.ksp.symbol.KSValueParameter
+import com.google.devtools.ksp.symbol.Modifier
 import java.io.OutputStream
 import java.io.OutputStreamWriter
 
@@ -15,22 +21,24 @@ import java.io.OutputStreamWriter
 class ProtoDataStoreWriter(
     output: OutputStream,
     private val declaration: KSClassDeclaration,
-    private val logger: KSPLogger,
-    private val accumulator: IAccumulator,
+    logger: KSPLogger,
 ) : IWriter {
 
-    private val writer: OutputStreamWriter
+    private val outputStreamWriter: OutputStreamWriter = OutputStreamWriter(output)
+    private val accumulator: IAccumulator = Accumulator()
 
     init {
         logger.info("ProtoDataStoreWriter: init processing")
-        writer = OutputStreamWriter(output)
+
+        declaration.containingFile?.accept(ClassVisitor(logger), this)
+
     }
 
-    override fun writeFunction() {
-        declaration.getAllFunctions()
-            .filter { declaration -> declaration.modifiers.contains(Modifier.SUSPEND) }
-            .filter { declaration -> declaration.isAbstract }
-            .filter { declaration -> declaration.parameters.size == 1 }.forEach { declaration ->
+    override fun writeFunction(function: KSFunctionDeclaration) {
+        function.takeIf { declaration -> declaration.modifiers.contains(Modifier.SUSPEND) }
+            ?.takeIf { declaration -> declaration.isAbstract }
+            ?.takeIf { declaration -> declaration.parameters.size == 1 }
+            ?.let { declaration ->
                 declaration.parameters.first().let { parameter ->
 
                     parameter.type.takeIf { it.isFunctionTypeWithBuilderArgument }
@@ -75,67 +83,59 @@ class ProtoDataStoreWriter(
         accumulator.storeImport(argImport)
     }
 
-    override fun writeProperty() {
+    override fun writeProperty(property: KSPropertyDeclaration) {
 
         fun getPropertyType(returnType: KSType) = returnType.toString()
             .replace("[Error type: Unresolved type for ", "")
             .replace("]", "")
 
-        declaration.getAllProperties()
-            .filter { declaration -> declaration.isAbstract() }
-            .filter { declaration ->
-                declaration.type.toString() == "Flow"
-            }
-            .also {
-                accumulator.storeImport("kotlinx.coroutines.flow.Flow")
-            }
-            .forEach {
+        property.takeIf { declaration -> declaration.isAbstract() }
+            ?.takeIf { declaration -> declaration.type.toString() == "Flow" }
+            ?.also { accumulator.storeImport("kotlinx.coroutines.flow.Flow") }
+            ?.let {
 
                 val returnType = it.type.resolve()
 
-                val property =
+                val declaredProperty =
                     "    override val $it: ${getPropertyType(returnType)} = dataStore.data"
 
-                accumulator.storeProperty(property)
+                accumulator.storeProperty(declaredProperty)
             }
     }
 
     override fun write() {
-        val visitor = ClassVisitor(logger, this)
 
-        declaration.containingFile?.accept(visitor, writer)
-
-        writer.write("package ${declaration.packageName.asString()}")
-        writer.appendLine().appendLine()
+        outputStreamWriter.write("package ${declaration.packageName.asString()}")
+        outputStreamWriter.appendLine().appendLine()
         accumulator.storeImport("androidx.datastore.core.DataStore")
 
-        writer.appendLine()
+        outputStreamWriter.appendLine()
         accumulator.importSet.forEach {
-            writer.write(it)
-            writer.appendLine()
+            outputStreamWriter.write(it)
+            outputStreamWriter.appendLine()
         }
 
-        writer.appendLine().appendLine()
+        outputStreamWriter.appendLine().appendLine()
 
         val fileName = declaration.simpleName.asString()
         val className = "${fileName}Impl"
 
-        writer.write("class $className(private val dataStore: DataStore<${accumulator.constructorArg}>) : $fileName {\n")
+        outputStreamWriter.write("class $className(private val dataStore: DataStore<${accumulator.constructorArg}>) : $fileName {\n")
 
-        writer.appendLine().appendLine()
+        outputStreamWriter.appendLine().appendLine()
 
         accumulator.propertySet.forEach {
-            writer.write(it)
-            writer.appendLine().appendLine()
+            outputStreamWriter.write(it)
+            outputStreamWriter.appendLine().appendLine()
         }
 
         accumulator.functionSet.forEach {
-            writer.write(it)
-            writer.appendLine().appendLine()
+            outputStreamWriter.write(it)
+            outputStreamWriter.appendLine().appendLine()
         }
 
-        writer.write("}")
-        writer.close()
+        outputStreamWriter.write("}")
+        outputStreamWriter.close()
     }
 }
 
