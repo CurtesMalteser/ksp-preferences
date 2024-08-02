@@ -3,12 +3,14 @@ package com.curtesmalteser.ksp.visitor
 import com.curtesmalteser.ksp.annotation.WithPreferences
 import com.curtesmalteser.ksp.annotation.WithProto
 import com.google.devtools.ksp.getDeclaredFunctions
+import com.google.devtools.ksp.getDeclaredProperties
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFile
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
+import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 
 /**
@@ -29,34 +31,56 @@ class ClassVisitor(private val logger: KSPLogger) :
 
         logger.info("Visiting class declaration of: $className")
 
-        classDeclaration.let { declaration ->
-            declaration.annotations.firstOrNull { annotation ->
-                // todo: return annotation name or null, so the code isn't executed
-                //  make generic function to check if annotation is correct and return annotation name
-                //  the return string join to declaration and concatenate with
-                //  InvalidAnnotationTargetException message
-                isWithPreferences(annotation) || isWithProto(annotation)
-            }?.run { declaration }
-        }?.let {
-            if (it.classKind == ClassKind.INTERFACE) {
-                logger.info("Annotation found: ${it.simpleName.getShortName()}")
-            } else {
-                throw InvalidAnnotationTargetException("Annotation can only be applied to an interface")
+        getDeclarationToAnnotationName(classDeclaration)
+            ?.let { (declaration, annotationName) ->
+                if (declaration.classKind == ClassKind.INTERFACE) {
+                    logger.info("Annotation found: ${declaration.simpleName.getShortName()}")
+                } else {
+                    throw InvalidAnnotationTargetException(annotationName = annotationName)
+                }
             }
-        }
 
         classDeclaration.getDeclaredFunctions().forEach { it.accept(this, Unit) }
+        classDeclaration.getDeclaredProperties().forEach { it.accept(this, Unit) }
     }
 
     override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: Unit) {
         logger.info("Visiting function declaration: ${function.simpleName.getShortName()}")
     }
 
-    private fun isWithProto(annotation: KSAnnotation) =
-        annotation.annotationType.resolve().declaration.qualifiedName?.asString() == WithProto::class.qualifiedName
+    override fun visitPropertyDeclaration(property: KSPropertyDeclaration, data: Unit) {
+        logger.info("Visiting property declaration: ${property.simpleName.getShortName()}")
+    }
 
-    private fun isWithPreferences(annotation: KSAnnotation) =
-        annotation.annotationType.resolve().declaration.qualifiedName?.asString() == WithPreferences::class.qualifiedName
+    private fun getDeclarationToAnnotationName(declaration: KSClassDeclaration): Pair<KSClassDeclaration, String>? =
+        run {
+            declaration.annotations.firstOrNull(::isValidAnnotation)?.let {
+                declaration to extractQualifiedName(it)
+            }
+        }
 
-    class InvalidAnnotationTargetException(message: String) : Exception(message)
+    private fun isValidAnnotation(annotation: KSAnnotation): Boolean {
+        return when (annotation.name) {
+            WithProto::class.qualifiedName -> true
+            WithPreferences::class.qualifiedName -> true
+            else -> false
+        }
+    }
+
+    private fun extractQualifiedName(annotation: KSAnnotation): String {
+        return when (annotation.name) {
+            WithProto::class.qualifiedName -> WithProto::class.qualifiedName!!
+            WithPreferences::class.qualifiedName -> WithPreferences::class.qualifiedName!!
+            else -> throw AnnotationNotAllowedException(annotationName = annotation.name)
+        }
+    }
+
+    private val KSAnnotation.name: String
+        get() = annotationType.resolve().declaration.qualifiedName?.asString()!!
+
+    class InvalidAnnotationTargetException(annotationName: String) :
+        Exception("Annotation: $annotationName can only be applied to an interface")
+
+    class AnnotationNotAllowedException(annotationName: String) :
+        Exception("Annotation: $annotationName Not Allowed")
 }
