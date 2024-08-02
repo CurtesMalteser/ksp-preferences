@@ -28,14 +28,13 @@ class PreferencesWriter(
     output: OutputStream,
     private val declaration: KSClassDeclaration,
     private val logger: KSPLogger,
-    private val accumulator: IAccumulator,
 ) : IWriter {
 
-    private val writer: OutputStreamWriter
+    private val outputStreamWriter: OutputStreamWriter = OutputStreamWriter(output)
+    private val accumulator: IAccumulator = Accumulator()
 
     init {
         logger.warn("Preferences Writer init processing")
-        writer = OutputStreamWriter(output)
     }
 
     override fun writeFunction() {
@@ -102,41 +101,41 @@ class PreferencesWriter(
 
         val visitor = ClassVisitor(logger, this)
 
-        declaration.containingFile?.accept(visitor, writer)
+        declaration.containingFile?.accept(visitor, outputStreamWriter)
 
         accumulator.storeImport("androidx.datastore.preferences.core.edit")
 
-        writer.write("package ${declaration.packageName.asString()}")
-        writer.appendLine().appendLine()
+        outputStreamWriter.write("package ${declaration.packageName.asString()}")
+        outputStreamWriter.appendLine().appendLine()
         accumulator.storeImport("androidx.datastore.core.DataStore")
         accumulator.storeImport("androidx.datastore.preferences.core.Preferences")
-        writer.appendLine()
+        outputStreamWriter.appendLine()
         accumulator.importSet.forEach {
-            writer.write(it)
-            writer.appendLine()
+            outputStreamWriter.write(it)
+            outputStreamWriter.appendLine()
         }
 
-        writer.appendLine().appendLine()
+        outputStreamWriter.appendLine().appendLine()
 
         val fileName = declaration.simpleName.asString()
         val className = "${fileName}Impl"
 
-        writer.write("class $className(private val dataStore: DataStore<Preferences>) : $fileName {\n")
+        outputStreamWriter.write("class $className(private val dataStore: DataStore<Preferences>) : $fileName {\n")
 
-        writer.appendLine().appendLine()
+        outputStreamWriter.appendLine().appendLine()
 
         accumulator.propertySet.forEach {
-            writer.write(it)
-            writer.appendLine().appendLine()
+            outputStreamWriter.write(it)
+            outputStreamWriter.appendLine().appendLine()
         }
 
         accumulator.functionSet.forEach {
-            writer.write(it)
-            writer.appendLine().appendLine()
+            outputStreamWriter.write(it)
+            outputStreamWriter.appendLine().appendLine()
         }
 
-        writer.write("}")
-        writer.close()
+        outputStreamWriter.write("}")
+        outputStreamWriter.close()
     }
 
     private fun KSValueParameter.generateKey() {

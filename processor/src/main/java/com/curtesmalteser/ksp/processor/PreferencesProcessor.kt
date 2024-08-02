@@ -2,7 +2,6 @@ package com.curtesmalteser.ksp.processor
 
 import com.curtesmalteser.ksp.annotation.WithPreferences
 import com.curtesmalteser.ksp.annotation.WithProto
-import com.curtesmalteser.ksp.writer.Accumulator
 import com.curtesmalteser.ksp.writer.PreferencesWriter
 import com.curtesmalteser.ksp.writer.ProtoDataStoreWriter
 import com.google.devtools.ksp.processing.CodeGenerator
@@ -58,11 +57,11 @@ class PreferencesProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogg
             ).use { output ->
                 when {
                     T::class == WithPreferences::class -> PreferencesWriter(
-                        output, declaration, logger, Accumulator()
+                        output, declaration, logger
                     ).write()
 
                     T::class == WithProto::class -> ProtoDataStoreWriter(
-                        output, declaration, logger, Accumulator()
+                        output, declaration, logger
                     ).write()
                 }
             }

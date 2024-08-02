@@ -27,10 +27,10 @@ class ClassVisitor(private val logger: KSPLogger, private val writer: IWriter) :
 
         logger.logging("Visiting declaration of: ${classDeclaration.simpleName.getShortName()}")
 
-        classDeclaration.let {
-            it.annotations.firstOrNull { annotation ->
+        classDeclaration.let { declaration ->
+            declaration.annotations.firstOrNull { annotation ->
                 isWithPreferences(annotation) || isWithProto(annotation)
-            }?.run { it }
+            }?.run { declaration }
         }?.let {
             if (it.classKind == ClassKind.INTERFACE) {
                 writer.writeFunction()

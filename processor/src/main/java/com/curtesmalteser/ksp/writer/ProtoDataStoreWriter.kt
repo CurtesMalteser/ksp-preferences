@@ -4,7 +4,11 @@ import com.curtesmalteser.ksp.visitor.ClassVisitor
 import com.google.devtools.ksp.containingFile
 import com.google.devtools.ksp.isAbstract
 import com.google.devtools.ksp.processing.KSPLogger
-import com.google.devtools.ksp.symbol.*
+import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSType
+import com.google.devtools.ksp.symbol.KSTypeReference
+import com.google.devtools.ksp.symbol.KSValueParameter
+import com.google.devtools.ksp.symbol.Modifier
 import java.io.OutputStream
 import java.io.OutputStreamWriter
 
@@ -16,14 +20,13 @@ class ProtoDataStoreWriter(
     output: OutputStream,
     private val declaration: KSClassDeclaration,
     private val logger: KSPLogger,
-    private val accumulator: IAccumulator,
 ) : IWriter {
 
-    private val writer: OutputStreamWriter
+    private val outputStreamWriter: OutputStreamWriter = OutputStreamWriter(output)
+    private val accumulator: IAccumulator = Accumulator()
 
     init {
         logger.info("ProtoDataStoreWriter: init processing")
-        writer = OutputStreamWriter(output)
     }
 
     override fun writeFunction() {
@@ -103,39 +106,39 @@ class ProtoDataStoreWriter(
     override fun write() {
         val visitor = ClassVisitor(logger, this)
 
-        declaration.containingFile?.accept(visitor, writer)
+        declaration.containingFile?.accept(visitor, outputStreamWriter)
 
-        writer.write("package ${declaration.packageName.asString()}")
-        writer.appendLine().appendLine()
+        outputStreamWriter.write("package ${declaration.packageName.asString()}")
+        outputStreamWriter.appendLine().appendLine()
         accumulator.storeImport("androidx.datastore.core.DataStore")
 
-        writer.appendLine()
+        outputStreamWriter.appendLine()
         accumulator.importSet.forEach {
-            writer.write(it)
-            writer.appendLine()
+            outputStreamWriter.write(it)
+            outputStreamWriter.appendLine()
         }
 
-        writer.appendLine().appendLine()
+        outputStreamWriter.appendLine().appendLine()
 
         val fileName = declaration.simpleName.asString()
         val className = "${fileName}Impl"
 
-        writer.write("class $className(private val dataStore: DataStore<${accumulator.constructorArg}>) : $fileName {\n")
+        outputStreamWriter.write("class $className(private val dataStore: DataStore<${accumulator.constructorArg}>) : $fileName {\n")
 
-        writer.appendLine().appendLine()
+        outputStreamWriter.appendLine().appendLine()
 
         accumulator.propertySet.forEach {
-            writer.write(it)
-            writer.appendLine().appendLine()
+            outputStreamWriter.write(it)
+            outputStreamWriter.appendLine().appendLine()
         }
 
         accumulator.functionSet.forEach {
-            writer.write(it)
-            writer.appendLine().appendLine()
+            outputStreamWriter.write(it)
+            outputStreamWriter.appendLine().appendLine()
         }
 
-        writer.write("}")
-        writer.close()
+        outputStreamWriter.write("}")
+        outputStreamWriter.close()
     }
 }
 
