@@ -41,10 +41,10 @@ class PreferencesWriter(
     }
 
     override fun writeFunction(function: KSFunctionDeclaration) {
-        declaration.getAllFunctions()
-            .filter { declaration -> declaration.modifiers.contains(Modifier.SUSPEND) }
-            .filter { declaration -> declaration.isAbstract }
-            .filter { declaration -> declaration.parameters.size == 1 }.forEach {
+        function.takeIf { declaration -> declaration.modifiers.contains(Modifier.SUSPEND) }
+            ?.takeIf { declaration -> declaration.isAbstract }
+            ?.takeIf { declaration -> declaration.parameters.size == 1 }
+            ?.let {
                 it.parameters.first().let { parameter ->
 
                     parameter.generateKey()
@@ -77,13 +77,12 @@ class PreferencesWriter(
 
     override fun writeProperty(property: KSPropertyDeclaration) {
 
-        declaration.getAllProperties().filter { declaration -> declaration.isAbstract() }
-            .filter { declaration ->
-                declaration.type.toString() == "Flow"
-            }.also {
+        property.takeIf { declaration -> declaration.isAbstract() }
+            ?.takeIf { declaration -> declaration.type.toString() == "Flow" }
+            ?.also {
                 accumulator.storeImport("kotlinx.coroutines.flow.map")
                 accumulator.storeImport("kotlinx.coroutines.flow.Flow")
-            }.forEach {
+            }?.let { it: KSPropertyDeclaration ->
 
                 val returnType = it.type.resolve().toString()
 

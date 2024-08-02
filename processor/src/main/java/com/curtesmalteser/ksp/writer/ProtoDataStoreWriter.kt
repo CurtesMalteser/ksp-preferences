@@ -35,10 +35,10 @@ class ProtoDataStoreWriter(
     }
 
     override fun writeFunction(function: KSFunctionDeclaration) {
-        declaration.getAllFunctions()
-            .filter { declaration -> declaration.modifiers.contains(Modifier.SUSPEND) }
-            .filter { declaration -> declaration.isAbstract }
-            .filter { declaration -> declaration.parameters.size == 1 }.forEach { declaration ->
+        function.takeIf { declaration -> declaration.modifiers.contains(Modifier.SUSPEND) }
+            ?.takeIf { declaration -> declaration.isAbstract }
+            ?.takeIf { declaration -> declaration.parameters.size == 1 }
+            ?.let { declaration ->
                 declaration.parameters.first().let { parameter ->
 
                     parameter.type.takeIf { it.isFunctionTypeWithBuilderArgument }
@@ -89,15 +89,10 @@ class ProtoDataStoreWriter(
             .replace("[Error type: Unresolved type for ", "")
             .replace("]", "")
 
-        declaration.getAllProperties()
-            .filter { declaration -> declaration.isAbstract() }
-            .filter { declaration ->
-                declaration.type.toString() == "Flow"
-            }
-            .also {
-                accumulator.storeImport("kotlinx.coroutines.flow.Flow")
-            }
-            .forEach {
+        property.takeIf { declaration -> declaration.isAbstract() }
+            ?.takeIf { declaration -> declaration.type.toString() == "Flow" }
+            ?.also { accumulator.storeImport("kotlinx.coroutines.flow.Flow") }
+            ?.let {
 
                 val returnType = it.type.resolve()
 
