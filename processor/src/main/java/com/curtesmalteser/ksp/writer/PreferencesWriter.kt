@@ -14,11 +14,11 @@ import com.google.devtools.ksp.isAbstract
 import com.google.devtools.ksp.isAnnotationPresent
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSValueParameter
 import com.google.devtools.ksp.symbol.Modifier
 import java.io.OutputStream
-import java.io.OutputStreamWriter
 
 /**
  * Created by António Bastião on 29.07.22
@@ -27,23 +27,22 @@ import java.io.OutputStreamWriter
 class PreferencesWriter(
     output: OutputStream,
     private val declaration: KSClassDeclaration,
-    private val logger: KSPLogger,
-    private val accumulator: IAccumulator,
-) : IWriter {
-
-    private val writer: OutputStreamWriter
+    logger: KSPLogger,
+) : BaseWriter(output) {
 
     init {
-        logger.warn("Preferences Writer init processing")
-        writer = OutputStreamWriter(output)
+        logger.info("PreferencesWriter init processing")
+
+        declaration.containingFile?.accept(ClassVisitor(logger), this)
+
+        storePreferencesImports()
     }
 
-    override fun writeFunction() {
-
-        declaration.getAllFunctions()
-            .filter { declaration -> declaration.modifiers.contains(Modifier.SUSPEND) }
-            .filter { declaration -> declaration.isAbstract }
-            .filter { declaration -> declaration.parameters.size == 1 }.forEach {
+    override fun writeFunction(function: KSFunctionDeclaration) {
+        function.takeIf { declaration -> declaration.modifiers.contains(Modifier.SUSPEND) }
+            ?.takeIf { declaration -> declaration.isAbstract }
+            ?.takeIf { declaration -> declaration.parameters.size == 1 }
+            ?.let {
                 it.parameters.first().let { parameter ->
 
                     parameter.generateKey()
@@ -74,19 +73,18 @@ class PreferencesWriter(
 
     }
 
-    override fun writeProperty() {
+    override fun writeProperty(property: KSPropertyDeclaration) {
 
-        declaration.getAllProperties().filter { declaration -> declaration.isAbstract() }
-            .filter { declaration ->
-                declaration.type.toString() == "Flow"
-            }.also {
+        property.takeIf { declaration -> declaration.isAbstract() }
+            ?.takeIf { declaration -> declaration.type.toString() == "Flow" }
+            ?.also {
                 accumulator.storeImport("kotlinx.coroutines.flow.map")
                 accumulator.storeImport("kotlinx.coroutines.flow.Flow")
-            }.forEach {
+            }?.let { it: KSPropertyDeclaration ->
 
                 val returnType = it.type.resolve().toString()
 
-                val property = """    override val $it: $returnType = dataStore.data
+                val declaredProperty = """    override val $it: $returnType = dataStore.data
                    |    .map { preferences ->
                    |        preferences[${
                     it.toString().replace("Flow", "Key")
@@ -94,49 +92,23 @@ class PreferencesWriter(
                    |    }
                    """.trimMargin()
 
-                accumulator.storeProperty(property)
+                accumulator.storeProperty(declaredProperty)
             }
     }
 
-    override fun write() {
+    override fun writeClass(declarationName: String) {
 
-        val visitor = ClassVisitor(logger, this)
+        val className = "${declarationName}Impl"
 
-        declaration.containingFile?.accept(visitor, writer)
+        accumulator.storeClass(
+            "class $className(private val dataStore: DataStore<Preferences>) : $declarationName {"
+        )
+    }
 
+    private fun storePreferencesImports() {
         accumulator.storeImport("androidx.datastore.preferences.core.edit")
-
-        writer.write("package ${declaration.packageName.asString()}")
-        writer.appendLine().appendLine()
         accumulator.storeImport("androidx.datastore.core.DataStore")
         accumulator.storeImport("androidx.datastore.preferences.core.Preferences")
-        writer.appendLine()
-        accumulator.importSet.forEach {
-            writer.write(it)
-            writer.appendLine()
-        }
-
-        writer.appendLine().appendLine()
-
-        val fileName = declaration.simpleName.asString()
-        val className = "${fileName}Impl"
-
-        writer.write("class $className(private val dataStore: DataStore<Preferences>) : $fileName {\n")
-
-        writer.appendLine().appendLine()
-
-        accumulator.propertySet.forEach {
-            writer.write(it)
-            writer.appendLine().appendLine()
-        }
-
-        accumulator.functionSet.forEach {
-            writer.write(it)
-            writer.appendLine().appendLine()
-        }
-
-        writer.write("}")
-        writer.close()
     }
 
     private fun KSValueParameter.generateKey() {
