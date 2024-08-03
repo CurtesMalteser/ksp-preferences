@@ -40,6 +40,11 @@ class PreferencesWriter(
         declaration.containingFile?.accept(ClassVisitor(logger), this)
     }
 
+    override fun writePackage(packageName: String) {
+        outputStreamWriter.write("package $packageName")
+        outputStreamWriter.appendLine()
+    }
+
     override fun writeFunction(function: KSFunctionDeclaration) {
         function.takeIf { declaration -> declaration.modifiers.contains(Modifier.SUSPEND) }
             ?.takeIf { declaration -> declaration.isAbstract }
@@ -102,8 +107,6 @@ class PreferencesWriter(
 
         accumulator.storeImport("androidx.datastore.preferences.core.edit")
 
-        outputStreamWriter.write("package ${declaration.packageName.asString()}")
-        outputStreamWriter.appendLine().appendLine()
         accumulator.storeImport("androidx.datastore.core.DataStore")
         accumulator.storeImport("androidx.datastore.preferences.core.Preferences")
         outputStreamWriter.appendLine()

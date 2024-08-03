@@ -22,7 +22,8 @@ import com.google.devtools.ksp.visitor.KSTopDownVisitor
 class ClassVisitor(private val logger: KSPLogger) : KSTopDownVisitor<IWriter, Unit>() {
 
     override fun visitFile(file: KSFile, data: IWriter) {
-        logger.info("Visiting file: ${file.fileName}")
+        logger.info("Visiting file: ${file.packageName.asString()}")
+        data.writePackage(file.packageName.asString())
         file.declarations.forEach { it.accept(this, data) }
     }
 
@@ -41,8 +42,8 @@ class ClassVisitor(private val logger: KSPLogger) : KSTopDownVisitor<IWriter, Un
                 }
             }
 
-        classDeclaration.getDeclaredFunctions().forEach { it.accept(this, data) }
         classDeclaration.getDeclaredProperties().forEach { it.accept(this, data) }
+        classDeclaration.getDeclaredFunctions().forEach { it.accept(this, data) }
     }
 
     override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: IWriter) {

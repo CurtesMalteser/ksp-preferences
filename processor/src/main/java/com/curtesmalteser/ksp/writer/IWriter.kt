@@ -8,6 +8,7 @@ import com.google.devtools.ksp.symbol.KSPropertyDeclaration
  * Refer to <a href="https://github.com/CurtesMalteser">CurtesMalteser github</a>
  */
 interface IWriter {
+    fun writePackage(packageName: String)
     fun writeFunction(function: KSFunctionDeclaration)
     fun writeProperty(property: KSPropertyDeclaration)
     fun write()
