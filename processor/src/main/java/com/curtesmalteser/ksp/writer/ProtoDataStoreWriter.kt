@@ -1,5 +1,6 @@
 package com.curtesmalteser.ksp.writer
 
+import com.curtesmalteser.ksp.visitor.ClassVisitor
 import com.google.devtools.ksp.containingFile
 import com.google.devtools.ksp.isAbstract
 import com.google.devtools.ksp.processing.KSPLogger
@@ -19,8 +20,16 @@ import java.io.OutputStream
 class ProtoDataStoreWriter(
     output: OutputStream,
     private val declaration: KSClassDeclaration,
-    logger: KSPLogger,
-) : BaseWriter(output, declaration, logger) {
+    private val logger: KSPLogger,
+) : BaseWriter(output) {
+
+    init {
+        logger.info("ProtoDataStoreWriter init processing")
+
+        declaration.containingFile?.accept(ClassVisitor(logger), this)
+
+        storeDataStoreImport()
+    }
 
     override fun writeFunction(function: KSFunctionDeclaration) {
         function.takeIf { declaration -> declaration.modifiers.contains(Modifier.SUSPEND) }
@@ -91,37 +100,17 @@ class ProtoDataStoreWriter(
             }
     }
 
-    override fun write() {
+    override fun writeClass(declarationName: String) {
 
+        val className = "${declarationName}Impl"
+
+        accumulator.storeClass(
+            "class $className(private val dataStore: DataStore<${accumulator.constructorArg}>) : $declarationName {"
+        )
+    }
+
+    private fun storeDataStoreImport() {
         accumulator.storeImport("androidx.datastore.core.DataStore")
-
-        outputStreamWriter.appendLine()
-        accumulator.importSet.forEach {
-            outputStreamWriter.write(it)
-            outputStreamWriter.appendLine()
-        }
-
-        outputStreamWriter.appendLine().appendLine()
-
-        val fileName = declaration.simpleName.asString()
-        val className = "${fileName}Impl"
-
-        outputStreamWriter.write("class $className(private val dataStore: DataStore<${accumulator.constructorArg}>) : $fileName {\n")
-
-        outputStreamWriter.appendLine().appendLine()
-
-        accumulator.propertySet.forEach {
-            outputStreamWriter.write(it)
-            outputStreamWriter.appendLine().appendLine()
-        }
-
-        accumulator.functionSet.forEach {
-            outputStreamWriter.write(it)
-            outputStreamWriter.appendLine().appendLine()
-        }
-
-        outputStreamWriter.write("}")
-        outputStreamWriter.close()
     }
 }
 

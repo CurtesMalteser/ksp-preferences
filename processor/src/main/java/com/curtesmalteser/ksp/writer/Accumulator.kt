@@ -1,42 +1,44 @@
 package com.curtesmalteser.ksp.writer
 
-interface IAccumulator {
-    var constructorArg: String
-    val importSet: Set<String>
-    val propertySet: Set<String>
-    val functionSet: Set<String>
-    fun storeImport(import: String): Boolean
-    fun storeProperty(declaration: String): Boolean
-    fun storeFunction(declaration: String): Boolean
-}
-
 /**
  * Created by António Bastião on 29.07.22
  * Refer to <a href="https://github.com/CurtesMalteser">CurtesMalteser github</a>
  */
-class Accumulator : IAccumulator {
+class Accumulator {
+
+    // TODO: Verify use contracts when throwing exception for not null or empty string
+    //  Leaving as nullable for now
+    private var _classDeclaration: String? = null
+    val classDeclaration: String
+        get() = _classDeclaration ?: throw IllegalStateException("Class declaration not set")
 
     private var _constructorArg: String? =null
-    override var constructorArg: String
+    var constructorArg: String
         get() = _constructorArg!!
         set(value) {
             _constructorArg = value
         }
 
     private val _importSet: MutableSet<String> = mutableSetOf()
-    override val importSet: Set<String> = _importSet
+    val importSet: Set<String> = _importSet
 
     private val _propertySet: MutableSet<String> = mutableSetOf()
-    override val propertySet: Set<String> = _propertySet
+    val propertySet: Set<String> = _propertySet
 
     private val _functionSet: MutableSet<String> = mutableSetOf()
-    override val functionSet: Set<String> = _functionSet
+    val functionSet: Set<String> = _functionSet
 
-    override fun storeImport(import: String) = _importSet.add("$IMPORT $import")
+    fun storeImport(import: String) = _importSet.add("$IMPORT $import")
 
-    override fun storeProperty(declaration: String) = _propertySet.add(declaration)
+    fun storeProperty(declaration: String) = _propertySet.add(declaration)
 
-    override fun storeFunction(declaration: String) = _functionSet.add(declaration)
+    fun storeFunction(declaration: String) = _functionSet.add(declaration)
+
+    // TODO: Make sure that is not called twice, check if it's not null before assign
+    //  and throw exception if it is already set
+    fun storeClass(declaration: String) {
+        _classDeclaration = declaration
+    }
 
     private companion object {
         const val IMPORT = "import"

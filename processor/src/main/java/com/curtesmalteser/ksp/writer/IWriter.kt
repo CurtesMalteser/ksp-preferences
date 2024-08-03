@@ -11,5 +11,6 @@ interface IWriter {
     fun writePackage(packageName: String)
     fun writeFunction(function: KSFunctionDeclaration)
     fun writeProperty(property: KSPropertyDeclaration)
+    fun writeClass(declarationName: String)
     fun write()
 }

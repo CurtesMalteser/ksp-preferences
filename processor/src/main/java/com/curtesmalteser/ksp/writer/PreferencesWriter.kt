@@ -6,6 +6,7 @@ import com.curtesmalteser.ksp.annotation.WithDefaultInt
 import com.curtesmalteser.ksp.annotation.WithDefaultLong
 import com.curtesmalteser.ksp.annotation.WithDefaultString
 import com.curtesmalteser.ksp.annotation.WithDefaultStringSet
+import com.curtesmalteser.ksp.visitor.ClassVisitor
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.innerArguments
@@ -27,7 +28,15 @@ class PreferencesWriter(
     output: OutputStream,
     private val declaration: KSClassDeclaration,
     logger: KSPLogger,
-) : BaseWriter(output, declaration, logger) {
+) : BaseWriter(output) {
+
+    init {
+        logger.info("PreferencesWriter init processing")
+
+        declaration.containingFile?.accept(ClassVisitor(logger), this)
+
+        storePreferencesImports()
+    }
 
     override fun writeFunction(function: KSFunctionDeclaration) {
         function.takeIf { declaration -> declaration.modifiers.contains(Modifier.SUSPEND) }
@@ -87,39 +96,19 @@ class PreferencesWriter(
             }
     }
 
-    override fun write() {
+    override fun writeClass(declarationName: String) {
 
+        val className = "${declarationName}Impl"
+
+        accumulator.storeClass(
+            "class $className(private val dataStore: DataStore<Preferences>) : $declarationName {"
+        )
+    }
+
+    private fun storePreferencesImports() {
         accumulator.storeImport("androidx.datastore.preferences.core.edit")
-
         accumulator.storeImport("androidx.datastore.core.DataStore")
         accumulator.storeImport("androidx.datastore.preferences.core.Preferences")
-        outputStreamWriter.appendLine()
-        accumulator.importSet.forEach {
-            outputStreamWriter.write(it)
-            outputStreamWriter.appendLine()
-        }
-
-        outputStreamWriter.appendLine().appendLine()
-
-        val fileName = declaration.simpleName.asString()
-        val className = "${fileName}Impl"
-
-        outputStreamWriter.write("class $className(private val dataStore: DataStore<Preferences>) : $fileName {\n")
-
-        outputStreamWriter.appendLine().appendLine()
-
-        accumulator.propertySet.forEach {
-            outputStreamWriter.write(it)
-            outputStreamWriter.appendLine().appendLine()
-        }
-
-        accumulator.functionSet.forEach {
-            outputStreamWriter.write(it)
-            outputStreamWriter.appendLine().appendLine()
-        }
-
-        outputStreamWriter.write("}")
-        outputStreamWriter.close()
     }
 
     private fun KSValueParameter.generateKey() {

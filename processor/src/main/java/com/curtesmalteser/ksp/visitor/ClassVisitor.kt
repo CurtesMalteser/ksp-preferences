@@ -29,7 +29,7 @@ class ClassVisitor(private val logger: KSPLogger) : KSTopDownVisitor<IWriter, Un
 
     override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: IWriter) {
 
-        val className = classDeclaration.simpleName.getShortName()
+        val className = classDeclaration.simpleName.asString()
 
         logger.info("Visiting class declaration of: $className")
 
@@ -44,6 +44,7 @@ class ClassVisitor(private val logger: KSPLogger) : KSTopDownVisitor<IWriter, Un
 
         classDeclaration.getDeclaredProperties().forEach { it.accept(this, data) }
         classDeclaration.getDeclaredFunctions().forEach { it.accept(this, data) }
+        writeClassAfterDeclarations(data, classDeclaration.simpleName.asString())
     }
 
     override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: IWriter) {
@@ -57,6 +58,11 @@ class ClassVisitor(private val logger: KSPLogger) : KSTopDownVisitor<IWriter, Un
     }
 
     override fun defaultHandler(node: KSNode, data: IWriter) = Unit
+
+    // Functions and properties must be processed first to generate the class constructor arguments.
+    private fun writeClassAfterDeclarations(data: IWriter, declarationName: String) {
+        data.writeClass(declarationName)
+    }
 
     private fun getDeclarationToAnnotationName(declaration: KSClassDeclaration): Pair<KSClassDeclaration, String>? =
         run {
