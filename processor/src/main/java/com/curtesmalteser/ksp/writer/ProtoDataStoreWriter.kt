@@ -1,6 +1,5 @@
 package com.curtesmalteser.ksp.writer
 
-import com.curtesmalteser.ksp.visitor.ClassVisitor
 import com.google.devtools.ksp.containingFile
 import com.google.devtools.ksp.isAbstract
 import com.google.devtools.ksp.processing.KSPLogger
@@ -12,7 +11,6 @@ import com.google.devtools.ksp.symbol.KSTypeReference
 import com.google.devtools.ksp.symbol.KSValueParameter
 import com.google.devtools.ksp.symbol.Modifier
 import java.io.OutputStream
-import java.io.OutputStreamWriter
 
 /**
  * Created by António Bastião on 02.11.22
@@ -22,22 +20,7 @@ class ProtoDataStoreWriter(
     output: OutputStream,
     private val declaration: KSClassDeclaration,
     logger: KSPLogger,
-) : IWriter {
-
-    private val outputStreamWriter: OutputStreamWriter = OutputStreamWriter(output)
-    private val accumulator: IAccumulator = Accumulator()
-
-    init {
-        logger.info("ProtoDataStoreWriter: init processing")
-
-        declaration.containingFile?.accept(ClassVisitor(logger), this)
-
-    }
-
-    override fun writePackage(packageName: String) {
-        outputStreamWriter.write("package $packageName")
-        outputStreamWriter.appendLine()
-    }
+) : BaseWriter(output, declaration, logger) {
 
     override fun writeFunction(function: KSFunctionDeclaration) {
         function.takeIf { declaration -> declaration.modifiers.contains(Modifier.SUSPEND) }

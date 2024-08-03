@@ -6,7 +6,6 @@ import com.curtesmalteser.ksp.annotation.WithDefaultInt
 import com.curtesmalteser.ksp.annotation.WithDefaultLong
 import com.curtesmalteser.ksp.annotation.WithDefaultString
 import com.curtesmalteser.ksp.annotation.WithDefaultStringSet
-import com.curtesmalteser.ksp.visitor.ClassVisitor
 import com.google.devtools.ksp.KspExperimental
 import com.google.devtools.ksp.getAnnotationsByType
 import com.google.devtools.ksp.innerArguments
@@ -19,7 +18,6 @@ import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.KSValueParameter
 import com.google.devtools.ksp.symbol.Modifier
 import java.io.OutputStream
-import java.io.OutputStreamWriter
 
 /**
  * Created by António Bastião on 29.07.22
@@ -29,21 +27,7 @@ class PreferencesWriter(
     output: OutputStream,
     private val declaration: KSClassDeclaration,
     logger: KSPLogger,
-) : IWriter {
-
-    private val outputStreamWriter: OutputStreamWriter = OutputStreamWriter(output)
-    private val accumulator: IAccumulator = Accumulator()
-
-    init {
-        logger.info("Preferences Writer init processing")
-
-        declaration.containingFile?.accept(ClassVisitor(logger), this)
-    }
-
-    override fun writePackage(packageName: String) {
-        outputStreamWriter.write("package $packageName")
-        outputStreamWriter.appendLine()
-    }
+) : BaseWriter(output, declaration, logger) {
 
     override fun writeFunction(function: KSFunctionDeclaration) {
         function.takeIf { declaration -> declaration.modifiers.contains(Modifier.SUSPEND) }
