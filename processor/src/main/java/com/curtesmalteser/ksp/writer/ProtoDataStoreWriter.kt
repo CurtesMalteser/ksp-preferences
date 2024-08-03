@@ -12,7 +12,6 @@ import com.google.devtools.ksp.symbol.KSTypeReference
 import com.google.devtools.ksp.symbol.KSValueParameter
 import com.google.devtools.ksp.symbol.Modifier
 import java.io.OutputStream
-import java.io.OutputStreamWriter
 
 /**
  * Created by António Bastião on 02.11.22
@@ -21,17 +20,15 @@ import java.io.OutputStreamWriter
 class ProtoDataStoreWriter(
     output: OutputStream,
     private val declaration: KSClassDeclaration,
-    logger: KSPLogger,
-) : IWriter {
-
-    private val outputStreamWriter: OutputStreamWriter = OutputStreamWriter(output)
-    private val accumulator: IAccumulator = Accumulator()
+    private val logger: KSPLogger,
+) : BaseWriter(output) {
 
     init {
-        logger.info("ProtoDataStoreWriter: init processing")
+        logger.info("ProtoDataStoreWriter init processing")
 
         declaration.containingFile?.accept(ClassVisitor(logger), this)
 
+        storeDataStoreImport()
     }
 
     override fun writeFunction(function: KSFunctionDeclaration) {
@@ -103,39 +100,17 @@ class ProtoDataStoreWriter(
             }
     }
 
-    override fun write() {
+    override fun writeClass(declarationName: String) {
 
-        outputStreamWriter.write("package ${declaration.packageName.asString()}")
-        outputStreamWriter.appendLine().appendLine()
+        val className = "${declarationName}Impl"
+
+        accumulator.storeClass(
+            "class $className(private val dataStore: DataStore<${accumulator.constructorArg}>) : $declarationName {"
+        )
+    }
+
+    private fun storeDataStoreImport() {
         accumulator.storeImport("androidx.datastore.core.DataStore")
-
-        outputStreamWriter.appendLine()
-        accumulator.importSet.forEach {
-            outputStreamWriter.write(it)
-            outputStreamWriter.appendLine()
-        }
-
-        outputStreamWriter.appendLine().appendLine()
-
-        val fileName = declaration.simpleName.asString()
-        val className = "${fileName}Impl"
-
-        outputStreamWriter.write("class $className(private val dataStore: DataStore<${accumulator.constructorArg}>) : $fileName {\n")
-
-        outputStreamWriter.appendLine().appendLine()
-
-        accumulator.propertySet.forEach {
-            outputStreamWriter.write(it)
-            outputStreamWriter.appendLine().appendLine()
-        }
-
-        accumulator.functionSet.forEach {
-            outputStreamWriter.write(it)
-            outputStreamWriter.appendLine().appendLine()
-        }
-
-        outputStreamWriter.write("}")
-        outputStreamWriter.close()
     }
 }
 

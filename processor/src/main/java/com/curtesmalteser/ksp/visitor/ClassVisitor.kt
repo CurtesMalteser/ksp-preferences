@@ -22,13 +22,14 @@ import com.google.devtools.ksp.visitor.KSTopDownVisitor
 class ClassVisitor(private val logger: KSPLogger) : KSTopDownVisitor<IWriter, Unit>() {
 
     override fun visitFile(file: KSFile, data: IWriter) {
-        logger.info("Visiting file: ${file.fileName}")
+        logger.info("Visiting file: ${file.packageName.asString()}")
+        data.writePackage(file.packageName.asString())
         file.declarations.forEach { it.accept(this, data) }
     }
 
     override fun visitClassDeclaration(classDeclaration: KSClassDeclaration, data: IWriter) {
 
-        val className = classDeclaration.simpleName.getShortName()
+        val className = classDeclaration.simpleName.asString()
 
         logger.info("Visiting class declaration of: $className")
 
@@ -41,8 +42,9 @@ class ClassVisitor(private val logger: KSPLogger) : KSTopDownVisitor<IWriter, Un
                 }
             }
 
-        classDeclaration.getDeclaredFunctions().forEach { it.accept(this, data) }
         classDeclaration.getDeclaredProperties().forEach { it.accept(this, data) }
+        classDeclaration.getDeclaredFunctions().forEach { it.accept(this, data) }
+        writeClassAfterDeclarations(data, classDeclaration.simpleName.asString())
     }
 
     override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: IWriter) {
@@ -56,6 +58,11 @@ class ClassVisitor(private val logger: KSPLogger) : KSTopDownVisitor<IWriter, Un
     }
 
     override fun defaultHandler(node: KSNode, data: IWriter) = Unit
+
+    // Functions and properties must be processed first to generate the class constructor arguments.
+    private fun writeClassAfterDeclarations(data: IWriter, declarationName: String) {
+        data.writeClass(declarationName)
+    }
 
     private fun getDeclarationToAnnotationName(declaration: KSClassDeclaration): Pair<KSClassDeclaration, String>? =
         run {
