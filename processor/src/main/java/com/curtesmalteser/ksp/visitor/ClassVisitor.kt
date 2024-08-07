@@ -31,12 +31,12 @@ class ClassVisitor(private val logger: KSPLogger) : KSTopDownVisitor<IWriter, Un
 
         val className = classDeclaration.simpleName.asString()
 
-        logger.info("Visiting class declaration of: $className")
 
         getDeclarationToAnnotationName(classDeclaration)
             ?.let { (declaration, annotationName) ->
                 if (declaration.classKind == ClassKind.INTERFACE) {
                     logger.info("Annotation found: ${declaration.simpleName.getShortName()}")
+                    logger.info("Visiting class declaration of: $className")
                 } else {
                     throw InvalidAnnotationTargetException(annotationName = annotationName)
                 }
@@ -48,12 +48,10 @@ class ClassVisitor(private val logger: KSPLogger) : KSTopDownVisitor<IWriter, Un
     }
 
     override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: IWriter) {
-        logger.info("Visiting function declaration: ${function.simpleName.getShortName()}")
         data.writeFunction(function)
     }
 
     override fun visitPropertyDeclaration(property: KSPropertyDeclaration, data: IWriter) {
-        logger.info("Visiting property declaration: ${property.simpleName.getShortName()}")
         data.writeProperty(property)
     }
 
