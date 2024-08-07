@@ -49,10 +49,11 @@ class PreferencesProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogg
 
         allFiles.toList().map { declaration ->
             val packageName = declaration.containingFile!!.packageName.asString()
-            val fileName = declaration.simpleName.asString()
-            val className = "${fileName}Impl"
+            val declarationFileName = declaration.simpleName.asString()
+            val fileName = "${declarationFileName}Impl"
+
             codeGenerator.createNewFile(
-                Dependencies(false, declaration.containingFile!!), packageName, className, "kt"
+                Dependencies(false, declaration.containingFile!!), packageName, fileName, "kt"
             ).use { output ->
                 when {
                     T::class == WithPreferences::class -> PreferencesWriter(

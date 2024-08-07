@@ -26,7 +26,7 @@ import java.io.OutputStream
  */
 class PreferencesWriter(
     output: OutputStream,
-    private val declaration: KSClassDeclaration,
+    declaration: KSClassDeclaration,
     logger: KSPLogger,
 ) : BaseWriter(output) {
 

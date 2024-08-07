@@ -19,8 +19,8 @@ import java.io.OutputStream
  */
 class ProtoDataStoreWriter(
     output: OutputStream,
-    private val declaration: KSClassDeclaration,
-    private val logger: KSPLogger,
+    declaration: KSClassDeclaration,
+    logger: KSPLogger,
 ) : BaseWriter(output) {
 
     init {
