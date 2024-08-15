@@ -2,7 +2,7 @@ import com.curtesmalteser.publish.PublishArtifactTask
 
 plugins {
     id("java-library")
-    id("org.jetbrains.kotlin.jvm")
+    alias(libs.plugins.jetbrains.kotlin.jvm)
     alias(libs.plugins.google.protobuf)
     id("maven-publish")
 

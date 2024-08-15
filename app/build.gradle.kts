@@ -108,6 +108,7 @@ dependencies {
 
     implementation(project(":annotation"))
     ksp(project(":processor"))
+    kspTest(project(":test-processor"))
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

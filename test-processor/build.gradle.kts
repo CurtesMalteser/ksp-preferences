@@ -2,7 +2,7 @@ import com.curtesmalteser.publish.PublishArtifactTask
 
 plugins {
     id("java-library")
-    id("org.jetbrains.kotlin.jvm")
+    alias(libs.plugins.jetbrains.kotlin.jvm)
     id("maven-publish")
 }
 
@@ -14,6 +14,7 @@ java {
 dependencies {
     implementation(libs.symbol.processing.api)
     implementation(project(":annotation"))
+    implementation(project(":writer"))
 }
 
 tasks.register<PublishArtifactTask>("publishMyArtifact") {
