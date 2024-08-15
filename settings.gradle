@@ -19,3 +19,4 @@ rootProject.name = "KsPreferences"
 include ':app'
 include ':processor'
 include ':annotation'
+include ':test-processor'
