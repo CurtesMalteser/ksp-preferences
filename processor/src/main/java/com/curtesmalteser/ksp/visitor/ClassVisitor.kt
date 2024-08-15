@@ -19,6 +19,10 @@ import com.google.devtools.ksp.visitor.KSTopDownVisitor
  * Created by António Bastião on 04.02.23
  * Refer to <a href="https://github.com/CurtesMalteser">CurtesMalteser github</a>
  */
+
+fun KSClassDeclaration.isInterface() =
+    this.classKind == ClassKind.INTERFACE
+
 class ClassVisitor(private val logger: KSPLogger) : KSTopDownVisitor<IWriter, Unit>() {
 
     override fun visitFile(file: KSFile, data: IWriter) {
@@ -31,10 +35,9 @@ class ClassVisitor(private val logger: KSPLogger) : KSTopDownVisitor<IWriter, Un
 
         val className = classDeclaration.simpleName.asString()
 
-
         getDeclarationToAnnotationName(classDeclaration)
             ?.let { (declaration, annotationName) ->
-                if (declaration.classKind == ClassKind.INTERFACE) {
+                if (declaration.isInterface()) {
                     logger.info("Annotation found: ${declaration.simpleName.getShortName()}")
                     logger.info("Visiting class declaration of: $className")
                 } else {
